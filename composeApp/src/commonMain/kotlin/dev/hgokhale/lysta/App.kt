@@ -14,22 +14,22 @@ import androidx.compose.ui.unit.dp
 fun App() {
     MaterialTheme {
         Column(
-            Modifier.fillMaxWidth().padding(32.dp),
+            Modifier.fillMaxWidth().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         )
         {
             val list = remember {
-                LystaList(
+                Lyst(
                     "Groceries",
                     listOf(
-                        LystaList.Item("Milk", false),
-                        LystaList.Item("Eggs", false),
-                        LystaList.Item("Bread", true),
-                        LystaList.Item("Butter", true),
+                        Lyst.Item("Milk", false),
+                        Lyst.Item("Eggs", false),
+                        Lyst.Item("Bread", true),
+                        Lyst.Item("Butter", true),
                     )
                 )
             }
-            LystaList(list)
+            Lyst(list)
         }
     }
 }
