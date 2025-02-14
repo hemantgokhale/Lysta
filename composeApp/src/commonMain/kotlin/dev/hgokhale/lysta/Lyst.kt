@@ -3,7 +3,6 @@ package dev.hgokhale.lysta
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,30 +20,48 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class Lyst(nameValue: String, itemsValue: List<Item>) {
     val name: MutableState<String> = mutableStateOf(nameValue)
-    val items: MutableState<List<Item>> = mutableStateOf(itemsValue)
+    val items: SnapshotStateList<Item> = mutableStateListOf<Item>().also { it.addAll(itemsValue) }
 
+    @OptIn(ExperimentalUuidApi::class)
     class Item(descriptionValue: String, checkedValue: Boolean) {
         val description: MutableState<String> = mutableStateOf(descriptionValue)
         val checked: MutableState<Boolean> = mutableStateOf(checkedValue)
+        val id = Uuid.random().toString()
+        val focusRequester = FocusRequester()
     }
 
+    fun addItem(description: String = "", checked: Boolean = false) {
+        items.add(Item(description, checked))
+    }
+
+    fun deleteItem(item: Item) {
+        items.remove(item)
+    }
 }
 
 /**
@@ -54,42 +71,45 @@ The item description is editable in place. The checkbox is toggled when clicked.
 The list is scrollable.
  */
 @Composable
-fun Lyst(list: Lyst) {
-    val uncheckedItems = list.items.value.filter { !it.checked.value }
-    val checkedItems = list.items.value.filter { it.checked.value }
-    var isCheckedItemsExpanded by remember { mutableStateOf(false) }
+fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
+    val uncheckedItems = list.items.filter { !it.checked.value }
+    val checkedItems = list.items.filter { it.checked.value }
+    var isCheckedItemsExpanded by remember { mutableStateOf(true) }
+    val focusManager = LocalFocusManager.current
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = list.name.value, fontSize = 24.sp)
-        LazyColumn {
-            val uncheckedItemsTextStyle = TextStyle(color = Color.Black)
-            val checkedItemsTextStyle = TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
+    LazyColumn(modifier = modifier) {
+        item { Text(text = list.name.value, fontSize = 24.sp, modifier = modifier.clickable { focusManager.clearFocus() }) }
+        val uncheckedItemsTextStyle = TextStyle(color = Color.Black)
+        items(
+            items = uncheckedItems,
+            key = { item -> item.id }
+        ) { item ->
+            CompositionLocalProvider(LocalTextStyle provides uncheckedItemsTextStyle) {
+                val requestFocus = item.description.value.isBlank() && (list.items.last() == item)
+                LystItem(item = item, requestFocusOnLaunch = requestFocus) { list.deleteItem(item) }
+            }
+        }
 
-            items(uncheckedItems) { item ->
-                CompositionLocalProvider(LocalTextStyle provides uncheckedItemsTextStyle) {
-                    LystItem(item = item)
-                }
+        item { AddItem { list.addItem() } }
+
+        if (checkedItems.isNotEmpty()) {
+            item {
+                CheckedItemsHeader(
+                    text = "${checkedItems.size} Checked item${if (checkedItems.size > 1) "s" else ""}",
+                    isExpanded = isCheckedItemsExpanded,
+                    onToggle = { isCheckedItemsExpanded = !isCheckedItemsExpanded }
+                )
             }
 
-            item { AddItem { println("Add button clicked") } }
-
-            if (checkedItems.isNotEmpty()) {
-                item {
-                    CheckedItemsHeader(
-                        text = "${checkedItems.size} Checked item${if (checkedItems.size > 1) "s" else ""}",
-                        isExpanded = isCheckedItemsExpanded,
-                        onToggle = { isCheckedItemsExpanded = !isCheckedItemsExpanded }
-                    )
-                }
-
-                item {
+            if (isCheckedItemsExpanded) {
+                val checkedItemsTextStyle = TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
+                items(
+                    items = checkedItems,
+                    key = { item -> item.id }
+                ) { item ->
                     AnimatedVisibility(visible = isCheckedItemsExpanded) {
-                        Column {
-                            checkedItems.forEach { item ->
-                                CompositionLocalProvider(LocalTextStyle provides checkedItemsTextStyle) {
-                                    LystItem(item = item)
-                                }
-                            }
+                        CompositionLocalProvider(LocalTextStyle provides checkedItemsTextStyle) {
+                            LystItem(item = item) { list.deleteItem(item) }
                         }
                     }
                 }
@@ -99,7 +119,7 @@ fun Lyst(list: Lyst) {
 }
 
 @Composable
-fun LystItem(item: Lyst.Item) {
+fun LystItem(item: Lyst.Item, requestFocusOnLaunch: Boolean = false, onDelete: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -112,12 +132,17 @@ fun LystItem(item: Lyst.Item) {
             value = item.description.value,
             onValueChange = { item.description.value = it },
             singleLine = true,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(item.focusRequester),
             textStyle = LocalTextStyle.current
         )
-        IconButton(onClick = { println("Delete button clicked") }) {
+        IconButton(onClick = onDelete) {
             Icon(painter = rememberVectorPainter(image = Icons.Filled.Close), contentDescription = "Delete", tint = Color.Black)
         }
+
+        if (requestFocusOnLaunch)
+            LaunchedEffect(item.id) { item.focusRequester.requestFocus() }
     }
 }
 
@@ -146,8 +171,8 @@ fun AddItem(onAdd: () -> Unit) {
         modifier = Modifier.fillMaxWidth().clickable { onAdd() },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // We don't really need an IconButton here since the entire row is clickable, but using it makes this item aligned with all other items.
-        // This is because Compose automatically adds padding around a clickable icon so that it has a minimum recommended touch target size.
+        // We don't really need an IconButton here since the entire row is clickable, but using it makes this item align with all other items.
+        // This is because Compose automatically adds padding around a tappable target so that it has a minimum recommended touch target size.
         IconButton(onClick = onAdd) {
             Icon(painter = rememberVectorPainter(image = Icons.Filled.Add), contentDescription = "Add item", tint = Color.Black)
         }
