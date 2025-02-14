@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
@@ -48,15 +49,16 @@ class Lyst(nameValue: String, itemsValue: List<Item>) {
     val items: SnapshotStateList<Item> = mutableStateListOf<Item>().also { it.addAll(itemsValue) }
 
     @OptIn(ExperimentalUuidApi::class)
-    class Item(descriptionValue: String, checkedValue: Boolean) {
-        val description: MutableState<String> = mutableStateOf(descriptionValue)
+    class Item(descriptionValue: String, checkedValue: Boolean, requestFocusOnLaunch: Boolean = false) {
         val checked: MutableState<Boolean> = mutableStateOf(checkedValue)
-        val id = Uuid.random().toString()
+        val description: MutableState<String> = mutableStateOf(descriptionValue)
         val focusRequester = FocusRequester()
+        val id = Uuid.random().toString()
+        val requestFocusOnLaunch: MutableState<Boolean> = mutableStateOf(requestFocusOnLaunch) // Set when added. Reset when focus is lost.
     }
 
     fun addItem(description: String = "", checked: Boolean = false) {
-        items.add(Item(description, checked))
+        items.add(Item(description, checked, true))
     }
 
     fun deleteItem(item: Item) {
@@ -85,8 +87,7 @@ fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
             key = { item -> item.id }
         ) { item ->
             CompositionLocalProvider(LocalTextStyle provides uncheckedItemsTextStyle) {
-                val requestFocus = item.description.value.isBlank() && (list.items.last() == item)
-                LystItem(item = item, requestFocusOnLaunch = requestFocus) { list.deleteItem(item) }
+                LystItem(item = item) { list.deleteItem(item) }
             }
         }
 
@@ -119,7 +120,7 @@ fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun LystItem(item: Lyst.Item, requestFocusOnLaunch: Boolean = false, onDelete: () -> Unit) {
+fun LystItem(item: Lyst.Item, onDelete: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -134,14 +135,15 @@ fun LystItem(item: Lyst.Item, requestFocusOnLaunch: Boolean = false, onDelete: (
             singleLine = true,
             modifier = Modifier
                 .weight(1f)
-                .focusRequester(item.focusRequester),
+                .focusRequester(item.focusRequester)
+                .onFocusChanged { if (!it.isFocused) item.requestFocusOnLaunch.value = false },
             textStyle = LocalTextStyle.current
         )
         IconButton(onClick = onDelete) {
             Icon(painter = rememberVectorPainter(image = Icons.Filled.Close), contentDescription = "Delete", tint = Color.Black)
         }
 
-        if (requestFocusOnLaunch)
+        if (item.requestFocusOnLaunch.value)
             LaunchedEffect(item.id) { item.focusRequester.requestFocus() }
     }
 }
