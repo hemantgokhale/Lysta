@@ -36,7 +36,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -77,10 +76,17 @@ fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
     val uncheckedItems = list.items.filter { !it.checked.value }
     val checkedItems = list.items.filter { it.checked.value }
     var isCheckedItemsExpanded by remember { mutableStateOf(true) }
-    val focusManager = LocalFocusManager.current
 
     LazyColumn(modifier = modifier) {
-        item { Text(text = list.name.value, fontSize = 24.sp, modifier = modifier.clickable { focusManager.clearFocus() }) }
+        item {
+            BasicTextField(
+                value = list.name.value,
+                onValueChange = { list.name.value = it },
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 24.sp)
+            )
+        }
+
         val uncheckedItemsTextStyle = TextStyle(color = Color.Black)
         items(
             items = uncheckedItems,
