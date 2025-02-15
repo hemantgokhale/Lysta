@@ -82,7 +82,6 @@ fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
             BasicTextField(
                 value = list.name.value,
                 onValueChange = { list.name.value = it },
-                singleLine = true,
                 textStyle = TextStyle(fontSize = 24.sp)
             )
         }
@@ -138,7 +137,6 @@ fun LystItem(item: Lyst.Item, onDelete: () -> Unit) {
         BasicTextField(
             value = item.description.value,
             onValueChange = { item.description.value = it },
-            singleLine = true,
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(item.focusRequester)
