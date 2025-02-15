@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -31,6 +33,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -44,8 +47,9 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class Lyst(nameValue: String, itemsValue: List<Item>) {
-    val name: MutableState<String> = mutableStateOf(nameValue)
     val items: SnapshotStateList<Item> = mutableStateListOf<Item>().also { it.addAll(itemsValue) }
+    val name: MutableState<String> = mutableStateOf(nameValue)
+    val sorted: MutableState<Boolean> = mutableStateOf(false)
 
     @OptIn(ExperimentalUuidApi::class)
     class Item(descriptionValue: String, checkedValue: Boolean, requestFocusOnLaunch: Boolean = false) {
@@ -73,8 +77,9 @@ The list is scrollable.
  */
 @Composable
 fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
-    val uncheckedItems = list.items.filter { !it.checked.value }
-    val checkedItems = list.items.filter { it.checked.value }
+    val completeList = if (list.sorted.value) list.items.sortedBy { it.description.value } else list.items
+    val (checkedItems, uncheckedItems) = completeList.partition { it.checked.value }
+
     var isCheckedItemsExpanded by remember { mutableStateOf(true) }
 
     LazyColumn(modifier = modifier) {
@@ -84,6 +89,18 @@ fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
                 onValueChange = { list.name.value = it },
                 textStyle = TextStyle(fontSize = 24.sp)
             )
+        }
+
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
+                Text("Sort ")
+                Switch(
+                    checked = list.sorted.value,
+                    onCheckedChange = { list.sorted.value = it },
+                    modifier = Modifier.scale(0.75f)
+                )
+            }
         }
 
         val uncheckedItemsTextStyle = TextStyle(color = Color.Black)
