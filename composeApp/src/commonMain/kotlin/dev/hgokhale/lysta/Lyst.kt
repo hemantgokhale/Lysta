@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
@@ -82,7 +83,7 @@ fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
 
     var isCheckedItemsExpanded by remember { mutableStateOf(true) }
 
-    LazyColumn(modifier = modifier) {
+    LazyColumn(modifier = modifier.widthIn(max = 450.dp).padding(16.dp)) {
         item {
             BasicTextField(
                 value = list.name.value,
