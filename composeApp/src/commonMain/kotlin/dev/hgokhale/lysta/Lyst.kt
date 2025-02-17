@@ -14,7 +14,9 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,7 +39,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.TextStyle
@@ -53,16 +54,14 @@ class Lyst(nameValue: String, itemsValue: List<Item>) {
     val sorted: MutableState<Boolean> = mutableStateOf(false)
 
     @OptIn(ExperimentalUuidApi::class)
-    class Item(descriptionValue: String, checkedValue: Boolean, requestFocusOnLaunch: Boolean = false) {
+    class Item(descriptionValue: String, checkedValue: Boolean) {
         val checked: MutableState<Boolean> = mutableStateOf(checkedValue)
         val description: MutableState<String> = mutableStateOf(descriptionValue)
-        val focusRequester = FocusRequester()
         val id = Uuid.random().toString()
-        val requestFocusOnLaunch: MutableState<Boolean> = mutableStateOf(requestFocusOnLaunch) // Set when added. Reset when focus is lost.
     }
 
     fun addItem(description: String = "", checked: Boolean = false) {
-        items.add(Item(description, checked, true))
+        items.add(Item(description, checked))
     }
 
     fun deleteItem(item: Item) {
@@ -114,7 +113,7 @@ fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
             }
         }
 
-        item { AddItem { list.addItem() } }
+        item { AddItem(list) }
 
         if (checkedItems.isNotEmpty()) {
             item {
@@ -156,17 +155,12 @@ fun LystItem(item: Lyst.Item, onDelete: () -> Unit) {
             value = item.description.value,
             onValueChange = { item.description.value = it },
             modifier = Modifier
-                .weight(1f)
-                .focusRequester(item.focusRequester)
-                .onFocusChanged { if (!it.isFocused) item.requestFocusOnLaunch.value = false },
+                .weight(1f),
             textStyle = LocalTextStyle.current
         )
         IconButton(onClick = onDelete) {
-            Icon(painter = rememberVectorPainter(image = Icons.Filled.Close), contentDescription = "Delete", tint = Color.Black)
+            Icon(painter = rememberVectorPainter(image = Icons.Default.Delete), contentDescription = "Delete", tint = Color.Black)
         }
-
-        if (item.requestFocusOnLaunch.value)
-            LaunchedEffect(item.id) { item.focusRequester.requestFocus() }
     }
 }
 
@@ -190,16 +184,56 @@ fun CheckedItemsHeader(text: String, isExpanded: Boolean, onToggle: () -> Unit) 
 }
 
 @Composable
-fun AddItem(onAdd: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable { onAdd() },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // We don't really need an IconButton here since the entire row is clickable, but using it makes this item align with all other items.
-        // This is because Compose automatically adds padding around a tappable target so that it has a minimum recommended touch target size.
-        IconButton(onClick = onAdd) {
-            Icon(painter = rememberVectorPainter(image = Icons.Filled.Add), contentDescription = "Add item", tint = Color.Black)
+fun AddItem(list: Lyst) {
+    var inEditMode by remember { mutableStateOf(false) }
+
+    if (inEditMode) {
+        ItemEditor("", false) { description, checked ->
+            if (description.isNotBlank()) {
+                list.addItem(description, checked)
+            }
+            inEditMode = false
         }
-        Text("Add item")
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable { inEditMode = true },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // We don't really need an IconButton here since the entire row is clickable, but using it makes this item align with all other items.
+            // This is because Compose automatically adds padding around a tappable target so that it has a minimum recommended touch target size.
+            IconButton(onClick = { inEditMode = true }) {
+                Icon(painter = rememberVectorPainter(image = Icons.Filled.Add), contentDescription = "Add item", tint = Color.Black)
+            }
+            Text("Add item")
+        }
+    }
+}
+
+@Composable
+private fun ItemEditor(descriptionToEdit: String, checkedToEdit: Boolean, onDone: (String, Boolean) -> Unit) {
+    val focusRequester = remember { FocusRequester() }
+    var description by remember { mutableStateOf(descriptionToEdit) }
+    var checked by remember { mutableStateOf(checkedToEdit) }
+
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = { checked = it },
+        )
+        BasicTextField(
+            value = description,
+            onValueChange = { description = it },
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester),
+            textStyle = LocalTextStyle.current
+        )
+        IconButton(onClick = { onDone(description, checked) }) {
+            Icon(painter = rememberVectorPainter(image = Icons.Default.Check), contentDescription = "Done", tint = Color.Black)
+        }
+        IconButton(onClick = { onDone(descriptionToEdit, checkedToEdit) }) {
+            Icon(painter = rememberVectorPainter(image = Icons.Default.Clear), contentDescription = "Cancel", tint = Color.Black)
+        }
+        LaunchedEffect(Unit) { focusRequester.requestFocus() }
     }
 }
