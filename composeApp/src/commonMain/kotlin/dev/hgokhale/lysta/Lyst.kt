@@ -3,6 +3,7 @@ package dev.hgokhale.lysta
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -215,7 +216,7 @@ private fun ItemEditor(descriptionToEdit: String, checkedToEdit: Boolean, onDone
     var description by remember { mutableStateOf(descriptionToEdit) }
     var checked by remember { mutableStateOf(checkedToEdit) }
 
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().focusGroup(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
             checked = checked,
             onCheckedChange = { checked = it },
@@ -234,6 +235,9 @@ private fun ItemEditor(descriptionToEdit: String, checkedToEdit: Boolean, onDone
         IconButton(onClick = { onDone(descriptionToEdit, checkedToEdit) }) {
             Icon(painter = rememberVectorPainter(image = Icons.Default.Clear), contentDescription = "Cancel", tint = Color.Black)
         }
-        LaunchedEffect(Unit) { focusRequester.requestFocus() }
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+            focusRequester.captureFocus()
+        }
     }
 }
