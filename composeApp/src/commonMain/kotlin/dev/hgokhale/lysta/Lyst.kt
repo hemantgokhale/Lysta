@@ -27,13 +27,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -46,29 +43,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
-
-class Lyst(nameValue: String, itemsValue: List<Item>) {
-    val items: SnapshotStateList<Item> = mutableStateListOf<Item>().also { it.addAll(itemsValue) }
-    val name: MutableState<String> = mutableStateOf(nameValue)
-    val sorted: MutableState<Boolean> = mutableStateOf(false)
-
-    @OptIn(ExperimentalUuidApi::class)
-    class Item(descriptionValue: String, checkedValue: Boolean) {
-        val checked: MutableState<Boolean> = mutableStateOf(checkedValue)
-        val description: MutableState<String> = mutableStateOf(descriptionValue)
-        val id = Uuid.random().toString()
-    }
-
-    fun addItem(description: String = "", checked: Boolean = false) {
-        items.add(Item(description, checked))
-    }
-
-    fun deleteItem(item: Item) {
-        items.remove(item)
-    }
-}
 
 /**
 This composable function renders a [Lyst].
