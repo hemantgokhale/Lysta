@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,7 +48,9 @@ fun DraggableFAB(onClick: () -> Unit) {
                     val offsetY = (fabOffset.y + dragAmount.y.toInt()).coerceIn(minOffset.y, 0)
                     fabOffset = IntOffset(offsetX, offsetY)
                 }
-            }
+            },
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
     ) {
         Icon(Icons.Default.Add, contentDescription = "Add item")
     }
