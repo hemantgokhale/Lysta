@@ -5,6 +5,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -29,12 +32,35 @@ class Lyst(name: String, itemsValue: List<Item>) {
     fun deleteItem(item: Item) {
         items.remove(item)
     }
+
+    override fun toString(): String = "Lyst: $name"
 }
 
-
 class LystViewModel : ViewModel() {
+    sealed class UIState(val title: String, val showFAB: Boolean) {
+        class Home : UIState(title = "Home", showFAB = true)
+        class Lyst(val lyst: dev.hgokhale.lysta.Lyst? = null, title: String = "") :
+            UIState(title = title, showFAB = false) {
+            constructor(lyst: dev.hgokhale.lysta.Lyst) : this(lyst = lyst, title = lyst.name.value)
+        }
+    }
 
     val lists: SnapshotStateList<Lyst> = mutableStateListOf()
+    private val _uiState = MutableStateFlow<UIState>(UIState.Home())
+    val uiState = _uiState.asStateFlow()
+
+    suspend fun loadList(id: String) {
+        _uiState.value = UIState.Lyst()
+        delay(500)
+        lists
+            .firstOrNull { it.id == id }
+            ?.let { _uiState.value = UIState.Lyst(lyst = it) }
+    }
+
+    suspend fun goHome() {
+        delay(500)
+        _uiState.value = UIState.Home()
+    }
 
     init {
         lists.add(

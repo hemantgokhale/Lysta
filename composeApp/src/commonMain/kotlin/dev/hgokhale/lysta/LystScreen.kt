@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
@@ -27,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,7 +42,17 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+
+@Composable
+fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystViewModel) {
+    LaunchedEffect(listId) { viewModel.loadList(listId) }
+    val uiState by viewModel.uiState.collectAsState()
+
+    (uiState as? LystViewModel.UIState.Lyst)
+        ?.lyst
+        ?.let { Lyst(list = it, modifier = modifier) }
+        ?: LoadingIndicator(modifier = modifier)
+}
 
 /**
 This composable function renders a [Lyst].
@@ -51,20 +61,13 @@ The item description is editable in place. The checkbox is toggled when clicked.
 The list is scrollable.
  */
 @Composable
-fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
+private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
     val completeList = if (list.sorted.value) list.items.sortedBy { it.description.value } else list.items
     val (checkedItems, uncheckedItems) = completeList.partition { it.checked.value }
 
     var isCheckedItemsExpanded by remember { mutableStateOf(true) }
 
-    LazyColumn(modifier = modifier.widthIn(max = 450.dp).padding(16.dp)) {
-        item {
-            BasicTextField(
-                value = list.name.value,
-                onValueChange = { list.name.value = it },
-                textStyle = TextStyle(fontSize = 24.sp)
-            )
-        }
+    LazyColumn(modifier = modifier) {
 
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -117,7 +120,7 @@ fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun LystItem(item: Lyst.Item, onDelete: () -> Unit) {
+private fun LystItem(item: Lyst.Item, onDelete: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -140,13 +143,13 @@ fun LystItem(item: Lyst.Item, onDelete: () -> Unit) {
 }
 
 @Composable
-fun CheckedItemsHeader(text: String, isExpanded: Boolean, onToggle: () -> Unit) {
+private fun CheckedItemsHeader(text: String, isExpanded: Boolean, onToggle: () -> Unit) {
     val rotationAngle by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "rotation")
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 8.dp)
-            .clickable { onToggle() },
+            .clickable { onToggle() }
+            .padding(start = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -159,7 +162,7 @@ fun CheckedItemsHeader(text: String, isExpanded: Boolean, onToggle: () -> Unit) 
 }
 
 @Composable
-fun AddItem(list: Lyst) {
+private fun AddItem(list: Lyst) {
     var inEditMode by remember { mutableStateOf(false) }
 
     if (inEditMode) {
