@@ -1,10 +1,12 @@
 package dev.hgokhale.lysta
 
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -17,7 +19,7 @@ import androidx.navigation.NavController
 fun TopBar(navController: NavController, viewModel: LystViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     TopAppBar(
-        title = { Text(uiState.title) },
+        title = { TopBarTitle(uiState) },
         navigationIcon = {
             if (uiState !is LystViewModel.UIState.Home) {
                 IconButton(onClick = {
@@ -28,4 +30,19 @@ fun TopBar(navController: NavController, viewModel: LystViewModel) {
             }
         }
     )
+}
+
+@Composable
+private fun TopBarTitle(uiState: LystViewModel.UIState) {
+    (uiState as? LystViewModel.UIState.Lyst)
+        ?.let { lystState ->
+            lystState.lyst?.let { lyst ->
+                BasicTextField(
+                    value = lyst.name.value,
+                    onValueChange = { lyst.name.value = it },
+                    textStyle = LocalTextStyle.current
+                )
+            }
+        }
+        ?: Text(uiState.title)
 }

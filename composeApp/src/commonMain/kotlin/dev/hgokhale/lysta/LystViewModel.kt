@@ -38,7 +38,7 @@ class Lyst(name: String, itemsValue: List<Item>) {
 
 class LystViewModel : ViewModel() {
     sealed class UIState(val title: String, val showFAB: Boolean) {
-        class Home : UIState(title = "Home", showFAB = true)
+        class Home : UIState(title = "My lists", showFAB = true)
         class Lyst(val lyst: dev.hgokhale.lysta.Lyst? = null, title: String = "") :
             UIState(title = title, showFAB = false) {
             constructor(lyst: dev.hgokhale.lysta.Lyst) : this(lyst = lyst, title = lyst.name.value)
