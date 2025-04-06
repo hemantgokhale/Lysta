@@ -11,7 +11,7 @@ import androidx.navigation.compose.composable
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Lyst : Screen("list/{listId}") {
-        fun createRoute(listId: String) = "list/$listId"
+        fun routeFor(listId: String) = "list/$listId"
     }
 }
 

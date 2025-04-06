@@ -91,7 +91,11 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
             }
         }
 
-        item { AddItem(list) }
+        item {
+            CompositionLocalProvider(LocalTextStyle provides uncheckedItemsTextStyle) {
+                AddItem(list)
+            }
+        }
 
         if (checkedItems.isNotEmpty()) {
             item {

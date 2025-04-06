@@ -39,7 +39,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel, navCon
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { navController.navigate(Screen.Lyst.createRoute(item.id)) },
+                    .clickable { navController.navigate(Screen.Lyst.routeFor(item.id)) },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = item.name.value)

@@ -28,7 +28,14 @@ fun App(viewModel: LystViewModel = viewModel { LystViewModel() }) {
             Scaffold(
                 modifier = Modifier.widthIn(max = 450.dp),
                 topBar = { TopBar(navController = navController, viewModel = viewModel) },
-                floatingActionButton = { if (uiState.showFAB) DraggableFAB { println("FAB Clicked") } },
+                floatingActionButton = {
+                    if (uiState.showFAB) {
+                        DraggableFAB {
+                            val listId = viewModel.newList()
+                            navController.navigate(Screen.Lyst.routeFor(listId))
+                        }
+                    }
+                },
             ) { paddingValues ->
                 NavGraph(paddingValues, navController, viewModel)
             }
