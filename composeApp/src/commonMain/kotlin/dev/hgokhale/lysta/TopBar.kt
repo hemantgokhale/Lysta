@@ -22,7 +22,7 @@ fun TopBar(navController: NavController, viewModel: LystViewModel) {
     TopAppBar(
         title = { TopBarTitle(uiState) },
         navigationIcon = {
-            if (uiState !is LystViewModel.UIState.Home) {
+            if ((uiState as? LystViewModel.UIState.Lyst)?.lyst != null) {
                 IconButton(onClick = {
                     navController.popBackStack()
                 }) {
