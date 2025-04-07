@@ -31,7 +31,7 @@ fun App(viewModel: LystViewModel = viewModel { LystViewModel() }) {
                 floatingActionButton = {
                     if (uiState.showFAB) {
                         DraggableFAB {
-                            val listId = viewModel.newList()
+                            val listId = viewModel.createList()
                             navController.navigate(Screen.Lyst.routeFor(listId))
                         }
                     }

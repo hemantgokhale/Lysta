@@ -49,10 +49,9 @@ class LystViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<UIState>(UIState.Home())
     val uiState = _uiState.asStateFlow()
 
-    fun newList(): String {
+    fun createList(): String {
         val list = Lyst(name = "New list", listOf())
         lists.add(list)
-        _uiState.value = UIState.Lyst(lyst = list)
         return list.id
     }
 
@@ -69,6 +68,10 @@ class LystViewModel : ViewModel() {
     suspend fun goHome() {
         delay(500) // to simulate loading from server
         _uiState.value = UIState.Home()
+    }
+
+    fun deleteList(id: String) {
+        lists.removeAll { it.id == id }
     }
 
     init {
