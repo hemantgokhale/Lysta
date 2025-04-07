@@ -20,12 +20,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -88,15 +86,11 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
             items = uncheckedItems,
             key = { item -> item.id }
         ) { item ->
-            CompositionLocalProvider(LocalTextStyle provides uncheckedItemsTextStyle) {
-                LystItem(item = item) { list.deleteItem(item) }
-            }
+            LystItem(item = item, textStyle = uncheckedItemsTextStyle) { list.deleteItem(item) }
         }
 
         item {
-            CompositionLocalProvider(LocalTextStyle provides uncheckedItemsTextStyle) {
-                AddItem(list)
-            }
+            AddItem(list, textStyle = uncheckedItemsTextStyle)
         }
 
         if (checkedItems.isNotEmpty()) {
@@ -114,9 +108,7 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
                     key = { item -> item.id }
                 ) { item ->
                     AnimatedVisibility(visible = isCheckedItemsExpanded) {
-                        CompositionLocalProvider(LocalTextStyle provides checkedItemsTextStyle) {
-                            LystItem(item = item) { list.deleteItem(item) }
-                        }
+                        LystItem(item = item, textStyle = checkedItemsTextStyle) { list.deleteItem(item) }
                     }
                 }
             }
@@ -125,7 +117,7 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun LystItem(item: Lyst.Item, onDelete: () -> Unit) {
+private fun LystItem(item: Lyst.Item, textStyle: TextStyle, onDelete: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -139,7 +131,7 @@ private fun LystItem(item: Lyst.Item, onDelete: () -> Unit) {
             onValueChange = { item.description.value = it },
             modifier = Modifier
                 .weight(1f),
-            textStyle = LocalTextStyle.current
+            textStyle = textStyle
         )
         IconButton(onClick = onDelete) {
             Icon(painter = rememberVectorPainter(image = Icons.Default.Delete), contentDescription = "Delete", tint = Color.Black)
@@ -167,11 +159,11 @@ private fun CheckedItemsHeader(text: String, isExpanded: Boolean, onToggle: () -
 }
 
 @Composable
-private fun AddItem(list: Lyst) {
+private fun AddItem(list: Lyst, textStyle: TextStyle) {
     var inEditMode by remember { mutableStateOf(false) }
 
     if (inEditMode) {
-        ItemEditor("", false) { description, checked ->
+        ItemEditor("", false, textStyle) { description, checked ->
             if (description.isNotBlank()) {
                 list.addItem(description, checked)
             }
@@ -187,13 +179,13 @@ private fun AddItem(list: Lyst) {
             IconButton(onClick = { inEditMode = true }) {
                 Icon(painter = rememberVectorPainter(image = Icons.Filled.Add), contentDescription = "Add item", tint = Color.Black)
             }
-            Text("Add item")
+            Text("Add item", style = textStyle)
         }
     }
 }
 
 @Composable
-private fun ItemEditor(descriptionToEdit: String, checkedToEdit: Boolean, onDone: (String, Boolean) -> Unit) {
+private fun ItemEditor(descriptionToEdit: String, checkedToEdit: Boolean, textStyle: TextStyle, onDone: (String, Boolean) -> Unit) {
     val focusRequester = remember { FocusRequester() }
     var description by remember { mutableStateOf(descriptionToEdit) }
     var checked by remember { mutableStateOf(checkedToEdit) }
@@ -209,7 +201,7 @@ private fun ItemEditor(descriptionToEdit: String, checkedToEdit: Boolean, onDone
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
-            textStyle = LocalTextStyle.current
+            textStyle = textStyle
         )
         IconButton(onClick = { onDone(description, checked) }) {
             Icon(painter = rememberVectorPainter(image = Icons.Default.Check), contentDescription = "Done", tint = Color.Black)
