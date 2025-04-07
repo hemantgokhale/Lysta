@@ -21,6 +21,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,6 +67,8 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
     val (checkedItems, uncheckedItems) = completeList.partition { it.checked.value }
 
     var isCheckedItemsExpanded by remember { mutableStateOf(true) }
+    val uncheckedItemsTextStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
+    val checkedItemsTextStyle = TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
 
     LazyColumn(modifier = modifier) {
 
@@ -81,7 +84,6 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
             }
         }
 
-        val uncheckedItemsTextStyle = TextStyle(color = Color.Black)
         items(
             items = uncheckedItems,
             key = { item -> item.id }
@@ -107,7 +109,6 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
             }
 
             if (isCheckedItemsExpanded) {
-                val checkedItemsTextStyle = TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
                 items(
                     items = checkedItems,
                     key = { item -> item.id }

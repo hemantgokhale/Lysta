@@ -6,12 +6,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.TextStyle
 import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,15 +35,16 @@ fun TopBar(navController: NavController, viewModel: LystViewModel) {
 
 @Composable
 private fun TopBarTitle(uiState: LystViewModel.UIState) {
+    val textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground, fontSize = MaterialTheme.typography.titleLarge.fontSize)
     (uiState as? LystViewModel.UIState.Lyst)
         ?.let { lystState ->
             lystState.lyst?.let { lyst ->
                 BasicTextField(
                     value = lyst.name.value,
                     onValueChange = { lyst.name.value = it },
-                    textStyle = LocalTextStyle.current
+                    textStyle = textStyle
                 )
             }
         }
-        ?: Text(uiState.title)
+        ?: Text(uiState.title, style = textStyle)
 }
