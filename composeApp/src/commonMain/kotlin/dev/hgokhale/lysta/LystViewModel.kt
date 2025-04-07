@@ -45,18 +45,20 @@ class LystViewModel : ViewModel() {
         }
     }
 
-    val lists: SnapshotStateList<Lyst> = mutableStateListOf()
+    private val _lists: SnapshotStateList<Lyst> = mutableStateListOf()
+    val lists: List<Lyst> get() = _lists
+
     private val _uiState = MutableStateFlow<UIState>(UIState.Home())
     val uiState = _uiState.asStateFlow()
 
     fun createList(): String {
         val list = Lyst(name = "New list", listOf())
-        lists.add(list)
+        _lists.add(list)
         return list.id
     }
 
     suspend fun loadList(id: String) {
-        lists
+        _lists
             .firstOrNull { it.id == id }
             ?.let {
                 _uiState.value = UIState.Lyst()
@@ -71,11 +73,11 @@ class LystViewModel : ViewModel() {
     }
 
     fun deleteList(id: String) {
-        lists.removeAll { it.id == id }
+        _lists.removeAll { it.id == id }
     }
 
     init {
-        lists.add(
+        _lists.add(
             Lyst(
                 "Groceries",
                 listOf(
@@ -99,7 +101,7 @@ class LystViewModel : ViewModel() {
             )
         )
 
-        lists.add(
+        _lists.add(
             Lyst(
                 "Backpacking",
                 listOf(
