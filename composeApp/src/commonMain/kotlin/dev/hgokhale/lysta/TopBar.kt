@@ -13,19 +13,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.TextStyle
-import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(navController: NavController, viewModel: LystViewModel) {
+fun TopBar(viewModel: LystViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     TopAppBar(
         title = { TopBarTitle(uiState) },
         navigationIcon = {
             if ((uiState as? LystViewModel.UIState.Lyst)?.lyst != null) {
-                IconButton(onClick = {
-                    navController.popBackStack()
-                }) {
+                IconButton(onClick = { viewModel.onBackArrowClicked() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             }

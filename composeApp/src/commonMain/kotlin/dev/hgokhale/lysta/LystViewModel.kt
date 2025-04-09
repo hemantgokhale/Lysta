@@ -5,11 +5,22 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+
+sealed class Screen(val route: String) {
+    data object Home : Screen("home")
+    data object Lyst : Screen("list/{listId}") {
+        fun routeFor(listId: String) = "list/$listId"
+    }
+}
 
 class Lyst(name: String, itemsValue: List<Item>) {
     @OptIn(ExperimentalUuidApi::class)
@@ -45,16 +56,43 @@ class LystViewModel : ViewModel() {
         }
     }
 
+    sealed interface UIEvent {
+        data class Navigate(val route: String) : UIEvent
+        data object NavigateBack : UIEvent
+    }
+
+    private val _uiEvent = MutableSharedFlow<UIEvent>()
+    val uiEvent = _uiEvent.asSharedFlow()
+
     private val _lists: SnapshotStateList<Lyst> = mutableStateListOf()
     val lists: List<Lyst> get() = _lists
 
     private val _uiState = MutableStateFlow<UIState>(UIState.Home())
     val uiState = _uiState.asStateFlow()
 
-    fun createList(): String {
+    private fun createList(): String {
         val list = Lyst(name = "New list", listOf())
         _lists.add(list)
         return list.id
+    }
+
+    fun onListClicked(id: String) {
+        viewModelScope.launch { _uiEvent.emit(UIEvent.Navigate(Screen.Lyst.routeFor(id))) }
+    }
+
+    fun onFabClicked() {
+        viewModelScope.launch {
+            when (uiState.value) {
+                is UIState.Home -> _uiEvent.emit(UIEvent.Navigate(Screen.Lyst.routeFor(createList())))
+                is UIState.Lyst -> {} // Currently not needed.
+            }
+        }
+    }
+
+    fun onBackArrowClicked() {
+        viewModelScope.launch {
+            _uiEvent.emit(UIEvent.NavigateBack)
+        }
     }
 
     suspend fun loadList(id: String) {

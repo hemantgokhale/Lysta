@@ -21,20 +21,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, viewModel: LystViewModel, navController: NavController) {
+fun HomeScreen(modifier: Modifier = Modifier, viewModel: LystViewModel) {
     LaunchedEffect(Unit) { viewModel.goHome() }
     val uiState by viewModel.uiState.collectAsState()
 
     (uiState as? LystViewModel.UIState.Home)
-        ?.let { Home(modifier = modifier, viewModel = viewModel, navController = navController) }
+        ?.let { Home(modifier = modifier, viewModel = viewModel) }
         ?: LoadingIndicator(modifier = modifier)
 }
 
 @Composable
-private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel, navController: NavController) {
+private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(16.dp)
     ) {
@@ -51,7 +50,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel, navCon
                     text = item.name.value,
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { navController.navigate(Screen.Lyst.routeFor(item.id)) }
+                        .clickable { viewModel.onListClicked(item.id) }
                 )
                 IconButton(onClick = { viewModel.deleteList(item.id) }) {
                     Icon(painter = rememberVectorPainter(image = Icons.Default.Delete), contentDescription = "Delete", tint = Color.Black)
