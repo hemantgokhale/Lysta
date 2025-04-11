@@ -1,8 +1,6 @@
 package dev.hgokhale.lysta
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,39 +10,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
-sealed class Screen(val route: String) {
-    data object Home : Screen("home")
-    data object Lyst : Screen("list/{listId}") {
+sealed class NavigationDestination(val route: String) {
+    data object Home : NavigationDestination("home")
+    data object Lyst : NavigationDestination("list/{listId}") {
         fun routeFor(listId: String) = "list/$listId"
     }
-}
-
-class Lyst(name: String, itemsValue: List<Item>) {
-    @OptIn(ExperimentalUuidApi::class)
-    val id = Uuid.random().toString()
-    val items: SnapshotStateList<Item> = mutableStateListOf<Item>().also { it.addAll(itemsValue) }
-    val name: MutableState<String> = mutableStateOf(name)
-    val sorted: MutableState<Boolean> = mutableStateOf(false)
-
-    @OptIn(ExperimentalUuidApi::class)
-    class Item(descriptionValue: String, checkedValue: Boolean) {
-        val checked: MutableState<Boolean> = mutableStateOf(checkedValue)
-        val description: MutableState<String> = mutableStateOf(descriptionValue)
-        val id = Uuid.random().toString()
-    }
-
-    fun addItem(description: String = "", checked: Boolean = false) {
-        items.add(Item(description, checked))
-    }
-
-    fun deleteItem(item: Item) {
-        items.remove(item)
-    }
-
-    override fun toString(): String = "Lyst: $name"
 }
 
 class LystViewModel : ViewModel() {
@@ -59,6 +30,7 @@ class LystViewModel : ViewModel() {
     sealed interface UIEvent {
         data class Navigate(val route: String) : UIEvent
         data object NavigateBack : UIEvent
+        data class Snackbar(val message: String, val actionLabel: String, val action: (() -> Unit)? = null) : UIEvent
     }
 
     private val _uiEvent = MutableSharedFlow<UIEvent>()
@@ -70,6 +42,8 @@ class LystViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<UIState>(UIState.Home())
     val uiState = _uiState.asStateFlow()
 
+    private var deletedLists = mutableListOf<Lyst>()
+
     private fun createList(): String {
         val list = Lyst(name = "New list", listOf())
         _lists.add(list)
@@ -77,13 +51,13 @@ class LystViewModel : ViewModel() {
     }
 
     fun onListClicked(id: String) {
-        viewModelScope.launch { _uiEvent.emit(UIEvent.Navigate(Screen.Lyst.routeFor(id))) }
+        viewModelScope.launch { _uiEvent.emit(UIEvent.Navigate(NavigationDestination.Lyst.routeFor(id))) }
     }
 
     fun onFabClicked() {
         viewModelScope.launch {
             when (uiState.value) {
-                is UIState.Home -> _uiEvent.emit(UIEvent.Navigate(Screen.Lyst.routeFor(createList())))
+                is UIState.Home -> _uiEvent.emit(UIEvent.Navigate(NavigationDestination.Lyst.routeFor(createList())))
                 is UIState.Lyst -> {} // Currently not needed.
             }
         }
@@ -111,7 +85,30 @@ class LystViewModel : ViewModel() {
     }
 
     fun deleteList(id: String) {
-        _lists.removeAll { it.id == id }
+        viewModelScope.launch {
+            _lists
+                .firstOrNull { it.id == id }
+                ?.let { lyst: Lyst ->
+                    _lists.remove(lyst)
+                    deletedLists.add(lyst)
+                    _uiEvent.emit(
+                        UIEvent.Snackbar(
+                            message = "${lyst.name.value} deleted",
+                            actionLabel = "Undo",
+                            action = { undeleteList(id = id) }
+                        )
+                    )
+                }
+        }
+    }
+
+    private fun undeleteList(id: String) {
+        deletedLists
+            .firstOrNull { it.id == id }
+            ?.let { lyst: Lyst ->
+                deletedLists.remove(lyst)
+                _lists.add(lyst)
+            }
     }
 
     init {
