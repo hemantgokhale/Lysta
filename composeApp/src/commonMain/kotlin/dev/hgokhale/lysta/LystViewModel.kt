@@ -43,6 +43,7 @@ class LystViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     private var deletedLists = mutableListOf<Lyst>()
+    private var deletedItems = mutableListOf<Pair<String, Lyst.Item>>() // first = listId, second = item
 
     private fun createList(): String {
         val list = Lyst(name = "New list", listOf())
@@ -108,6 +109,41 @@ class LystViewModel : ViewModel() {
             ?.let { lyst: Lyst ->
                 deletedLists.remove(lyst)
                 _lists.add(lyst)
+            }
+    }
+
+    fun deleteItem(listId: String, itemId: String) {
+        viewModelScope.launch {
+            _lists
+                .firstOrNull { it.id == listId }
+                ?.let { lyst: Lyst ->
+                    lyst.items
+                        .firstOrNull { it.id == itemId }
+                        ?.let { item: Lyst.Item ->
+                            lyst.deleteItem(item)
+                            deletedItems.add(Pair(listId, item))
+                            _uiEvent.emit(
+                                UIEvent.Snackbar(
+                                    message = "${item.description.value} deleted",
+                                    actionLabel = "Undo",
+                                    action = { undeleteItem(listId = listId, itemId = item.id) }
+                                )
+                            )
+                        }
+                }
+        }
+    }
+
+    private fun undeleteItem(listId: String, itemId: String) {
+        deletedItems
+            .firstOrNull { it.first == listId && it.second.id == itemId }
+            ?.let { entry ->
+                deletedItems.remove(entry)
+                _lists
+                    .firstOrNull { it.id == listId }
+                    ?.let { lyst: Lyst ->
+                        lyst.addItem(entry.second)
+                    }
             }
     }
 

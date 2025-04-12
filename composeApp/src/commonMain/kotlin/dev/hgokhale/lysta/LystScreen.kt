@@ -49,7 +49,7 @@ fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystVie
 
     (uiState as? LystViewModel.UIState.Lyst)
         ?.lyst
-        ?.let { Lyst(list = it, modifier = modifier) }
+        ?.let { Lyst(list = it, modifier = modifier, viewModel = viewModel) }
         ?: LoadingIndicator(modifier = modifier)
 }
 
@@ -60,7 +60,7 @@ The item description is editable in place. The checkbox is toggled when clicked.
 The list is scrollable.
  */
 @Composable
-private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
+private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewModel) {
     val completeList = if (list.sorted.value) list.items.sortedBy { it.description.value } else list.items
     val (checkedItems, uncheckedItems) = completeList.partition { it.checked.value }
 
@@ -86,7 +86,7 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
             items = uncheckedItems,
             key = { item -> item.id }
         ) { item ->
-            LystItem(item = item, textStyle = uncheckedItemsTextStyle) { list.deleteItem(item) }
+            LystItem(item = item, textStyle = uncheckedItemsTextStyle) { viewModel.deleteItem(list.id, item.id) }
         }
 
         item {
@@ -108,7 +108,7 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier) {
                     key = { item -> item.id }
                 ) { item ->
                     AnimatedVisibility(visible = isCheckedItemsExpanded) {
-                        LystItem(item = item, textStyle = checkedItemsTextStyle) { list.deleteItem(item) }
+                        LystItem(item = item, textStyle = checkedItemsTextStyle) { viewModel.deleteItem(list.id, item.id) }
                     }
                 }
             }

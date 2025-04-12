@@ -36,7 +36,7 @@ fun App(viewModel: LystViewModel = viewModel { LystViewModel() }) {
                     if (snackbarHostState.showSnackbar(
                             message = event.message,
                             actionLabel = event.actionLabel,
-                            withDismissAction = false,
+                            withDismissAction = true,
                             duration = SnackbarDuration.Short
                         ) == SnackbarResult.ActionPerformed
                     ) {
