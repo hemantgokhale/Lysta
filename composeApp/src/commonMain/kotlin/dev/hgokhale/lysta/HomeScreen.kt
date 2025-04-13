@@ -42,8 +42,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
             key = { item -> item.id }
         ) { item ->
             Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
