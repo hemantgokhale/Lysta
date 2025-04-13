@@ -139,7 +139,7 @@ private fun LystItem(item: Lyst.Item, textStyle: TextStyle, onDelete: () -> Unit
                 .weight(1f),
             textStyle = textStyle,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = {focusManager.clearFocus()}),
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true
         )
         IconButton(onClick = onDelete) {
@@ -172,12 +172,16 @@ private fun AddItem(list: Lyst, textStyle: TextStyle) {
     var inEditMode by remember { mutableStateOf(false) }
 
     if (inEditMode) {
-        ItemEditor("", false, textStyle) { description, checked ->
-            if (description.isNotBlank()) {
-                list.addItem(description, checked)
-            }
-            inEditMode = false
-        }
+        ItemEditor(
+            textToEdit = "",
+            checkedToEdit = false,
+            textStyle = textStyle,
+            onDone = { description, checked ->
+                if (description.isNotBlank()) list.addItem(description, checked)
+                inEditMode = false
+            },
+            onCancel = { inEditMode = false }
+        )
     } else {
         Row(
             modifier = Modifier.fillMaxWidth().clickable { inEditMode = true },
@@ -194,9 +198,15 @@ private fun AddItem(list: Lyst, textStyle: TextStyle) {
 }
 
 @Composable
-private fun ItemEditor(descriptionToEdit: String, checkedToEdit: Boolean, textStyle: TextStyle, onDone: (String, Boolean) -> Unit) {
+private fun ItemEditor(
+    textToEdit: String,
+    checkedToEdit: Boolean,
+    textStyle: TextStyle,
+    onDone: (String, Boolean) -> Unit,
+    onCancel: () -> Unit
+) {
     val focusRequester = remember { FocusRequester() }
-    var description by remember { mutableStateOf(descriptionToEdit) }
+    var text by remember { mutableStateOf(textToEdit) }
     var checked by remember { mutableStateOf(checkedToEdit) }
 
     Row(modifier = Modifier.fillMaxWidth().focusGroup(), verticalAlignment = Alignment.CenterVertically) {
@@ -205,20 +215,20 @@ private fun ItemEditor(descriptionToEdit: String, checkedToEdit: Boolean, textSt
             onCheckedChange = { checked = it },
         )
         BasicTextField(
-            value = description,
-            onValueChange = { description = it },
+            value = text,
+            onValueChange = { text = it },
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
             textStyle = textStyle,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onDone(description, checked) }),
+            keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
             singleLine = true
         )
-        IconButton(onClick = { onDone(description, checked) }) {
+        IconButton(onClick = { onDone(text, checked) }) {
             Icon(painter = rememberVectorPainter(image = Icons.Default.Check), contentDescription = "Done", tint = Color.Black)
         }
-        IconButton(onClick = { onDone(descriptionToEdit, checkedToEdit) }) {
+        IconButton(onClick = onCancel) {
             Icon(painter = rememberVectorPainter(image = Icons.Default.Clear), contentDescription = "Cancel", tint = Color.Black)
         }
         LaunchedEffect(Unit) {
