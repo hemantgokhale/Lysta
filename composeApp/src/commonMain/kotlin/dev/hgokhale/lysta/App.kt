@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 
 @Composable
 fun App(viewModel: LystViewModel = viewModel { LystViewModel() }) {
@@ -28,20 +29,32 @@ fun App(viewModel: LystViewModel = viewModel { LystViewModel() }) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { event ->
+        for (event in viewModel.navigationEvents) {
+            // If the user chooses to navigate away when a snackbar is showing, dismiss the snackbar.
+            snackbarHostState.currentSnackbarData?.dismiss()
             when (event) {
-                is LystViewModel.UIEvent.Navigate -> navController.navigate(event.route)
-                is LystViewModel.UIEvent.NavigateBack -> navController.popBackStack()
-                is LystViewModel.UIEvent.Snackbar -> {
-                    if (snackbarHostState.showSnackbar(
-                            message = event.message,
-                            actionLabel = event.actionLabel,
-                            withDismissAction = true,
-                            duration = SnackbarDuration.Short
-                        ) == SnackbarResult.ActionPerformed
-                    ) {
-                        event.action?.let { it() }
-                    }
+                is LystViewModel.NavigationEvent.Navigate -> navController.navigate(event.route)
+                is LystViewModel.NavigationEvent.NavigateBack -> navController.popBackStack()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        for (event in viewModel.snackbarEvents) {
+            launch {
+                // We show a snackbar to give the user an opportunity to undo an accidental delete. Given that,
+                // we don't allow a queue of snackbars to build up. If the user proceeds to delete multiple items
+                // one after another, they won't have to deal with a snackbar for every delete.
+                // A side effect of this logic is that they will be able to undo only the last delete.
+                snackbarHostState.currentSnackbarData?.dismiss()
+                val result = snackbarHostState.showSnackbar(
+                    message = event.message,
+                    actionLabel = event.actionLabel,
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Short
+                )
+                if (result == SnackbarResult.ActionPerformed) {
+                    event.action?.let { it() }
                 }
             }
         }

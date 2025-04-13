@@ -4,10 +4,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -27,14 +26,19 @@ class LystViewModel : ViewModel() {
         }
     }
 
-    sealed interface UIEvent {
-        data class Navigate(val route: String) : UIEvent
-        data object NavigateBack : UIEvent
-        data class Snackbar(val message: String, val actionLabel: String, val action: (() -> Unit)? = null) : UIEvent
+    sealed interface NavigationEvent {
+        data class Navigate(val route: String) : NavigationEvent
+        data object NavigateBack : NavigationEvent
     }
 
-    private val _uiEvent = MutableSharedFlow<UIEvent>()
-    val uiEvent = _uiEvent.asSharedFlow()
+    data class SnackbarEvent(val message: String, val actionLabel: String, val action: (() -> Unit)? = null)
+
+
+    private val _navigationEvents = Channel<NavigationEvent>(capacity = Channel.CONFLATED)
+    val navigationEvents: ReceiveChannel<NavigationEvent> get() = _navigationEvents
+
+    private val _snackbarEvents = Channel<SnackbarEvent>(capacity = Channel.CONFLATED)
+    val snackbarEvents: ReceiveChannel<SnackbarEvent> get() = _snackbarEvents
 
     private val _lists: SnapshotStateList<Lyst> = mutableStateListOf()
     val lists: List<Lyst> get() = _lists
@@ -52,36 +56,32 @@ class LystViewModel : ViewModel() {
     }
 
     fun onListClicked(id: String) {
-        viewModelScope.launch { _uiEvent.emit(UIEvent.Navigate(NavigationDestination.Lyst.routeFor(id))) }
+        viewModelScope.launch { _navigationEvents.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(id))) }
     }
 
     fun onFabClicked() {
         viewModelScope.launch {
             when (uiState.value) {
-                is UIState.Home -> _uiEvent.emit(UIEvent.Navigate(NavigationDestination.Lyst.routeFor(createList())))
+                is UIState.Home -> _navigationEvents.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(createList())))
                 is UIState.Lyst -> {} // Currently not needed.
             }
         }
     }
 
     fun onBackArrowClicked() {
-        viewModelScope.launch {
-            _uiEvent.emit(UIEvent.NavigateBack)
-        }
+        viewModelScope.launch { _navigationEvents.send(NavigationEvent.NavigateBack) }
     }
 
-    suspend fun loadList(id: String) {
+    fun loadList(id: String) {
         _lists
             .firstOrNull { it.id == id }
             ?.let {
                 _uiState.value = UIState.Lyst()
-                delay(500) // to simulate loading from server
                 _uiState.value = UIState.Lyst(lyst = it)
             }
     }
 
-    suspend fun goHome() {
-        delay(500) // to simulate loading from server
+    fun goHome() {
         _uiState.value = UIState.Home()
     }
 
@@ -92,8 +92,8 @@ class LystViewModel : ViewModel() {
                 ?.let { lyst: Lyst ->
                     _lists.remove(lyst)
                     deletedLists.add(lyst)
-                    _uiEvent.emit(
-                        UIEvent.Snackbar(
+                    _snackbarEvents.send(
+                        SnackbarEvent(
                             message = "${lyst.name.value} deleted",
                             actionLabel = "Undo",
                             action = { undeleteList(id = id) }
@@ -122,8 +122,8 @@ class LystViewModel : ViewModel() {
                         ?.let { item: Lyst.Item ->
                             lyst.deleteItem(item)
                             deletedItems.add(Pair(listId, item))
-                            _uiEvent.emit(
-                                UIEvent.Snackbar(
+                            _snackbarEvents.send(
+                                SnackbarEvent(
                                     message = "${item.description.value} deleted",
                                     actionLabel = "Undo",
                                     action = { undeleteItem(listId = listId, itemId = item.id) }
