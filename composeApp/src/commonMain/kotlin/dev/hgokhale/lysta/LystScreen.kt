@@ -44,7 +44,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystViewModel) {
+fun LystScreen(listId: Lyst.Id, modifier: Modifier = Modifier, viewModel: LystViewModel) {
     LaunchedEffect(listId) { viewModel.loadList(listId) }
     val uiState by viewModel.uiState.collectAsState()
 

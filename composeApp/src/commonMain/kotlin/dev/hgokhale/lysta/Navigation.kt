@@ -22,7 +22,7 @@ fun NavGraph(
         composable(NavigationDestination.Home.route) { HomeScreen(viewModel = viewModel) }
         composable(NavigationDestination.Lyst.route) { backStackEntry ->
             backStackEntry.arguments?.getString("listId")?.let {
-                LystScreen(listId = it, viewModel = viewModel)
+                LystScreen(listId = Lyst.Id(it), viewModel = viewModel)
             }
         }
     }
