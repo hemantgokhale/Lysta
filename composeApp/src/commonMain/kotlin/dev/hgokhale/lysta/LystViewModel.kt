@@ -94,7 +94,7 @@ class LystViewModel : ViewModel() {
                     deletedLists.add(lyst)
                     _snackbarEvents.send(
                         SnackbarEvent(
-                            message = "${lyst.name.value} deleted",
+                            message = "\"${lyst.name.value}\" deleted",
                             actionLabel = "Undo",
                             action = { undeleteList(id = id) }
                         )
@@ -124,7 +124,7 @@ class LystViewModel : ViewModel() {
                             deletedItems.add(Pair(listId, item))
                             _snackbarEvents.send(
                                 SnackbarEvent(
-                                    message = "${item.description.value} deleted",
+                                    message = "\"${item.description.value}\" deleted",
                                     actionLabel = "Undo",
                                     action = { undeleteItem(listId = listId, itemId = item.id) }
                                 )

@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -38,7 +40,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 
@@ -118,6 +122,8 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewM
 
 @Composable
 private fun LystItem(item: Lyst.Item, textStyle: TextStyle, onDelete: () -> Unit) {
+    val focusManager = LocalFocusManager.current
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -131,7 +137,10 @@ private fun LystItem(item: Lyst.Item, textStyle: TextStyle, onDelete: () -> Unit
             onValueChange = { item.description.value = it },
             modifier = Modifier
                 .weight(1f),
-            textStyle = textStyle
+            textStyle = textStyle,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {focusManager.clearFocus()}),
+            singleLine = true
         )
         IconButton(onClick = onDelete) {
             Icon(painter = rememberVectorPainter(image = Icons.Default.Delete), contentDescription = "Delete", tint = Color.Black)
@@ -201,7 +210,10 @@ private fun ItemEditor(descriptionToEdit: String, checkedToEdit: Boolean, textSt
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
-            textStyle = textStyle
+            textStyle = textStyle,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onDone(description, checked) }),
+            singleLine = true
         )
         IconButton(onClick = { onDone(description, checked) }) {
             Icon(painter = rememberVectorPainter(image = Icons.Default.Check), contentDescription = "Done", tint = Color.Black)

@@ -1,6 +1,8 @@
 package dev.hgokhale.lysta
 
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -12,7 +14,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,13 +37,18 @@ fun TopBar(viewModel: LystViewModel) {
 @Composable
 private fun TopBarTitle(uiState: LystViewModel.UIState) {
     val textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground, fontSize = MaterialTheme.typography.titleLarge.fontSize)
+    val focusManager = LocalFocusManager.current
+
     (uiState as? LystViewModel.UIState.Lyst)
         ?.let { lystState ->
             lystState.lyst?.let { lyst ->
                 BasicTextField(
                     value = lyst.name.value,
                     onValueChange = { lyst.name.value = it },
-                    textStyle = textStyle
+                    textStyle = textStyle,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {focusManager.clearFocus()}),
+                    singleLine = true
                 )
             }
         }
