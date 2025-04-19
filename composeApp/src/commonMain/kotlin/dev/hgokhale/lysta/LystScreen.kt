@@ -1,12 +1,9 @@
 package dev.hgokhale.lysta
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
@@ -14,7 +11,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
@@ -25,14 +21,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -41,12 +35,12 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystViewModel) {
     LaunchedEffect(listId) { viewModel.loadList(listId) }
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     (uiState as? LystViewModel.UIState.Lyst)
         ?.lyst
@@ -54,53 +48,34 @@ fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystVie
         ?: LoadingIndicator(modifier = modifier)
 }
 
-/**
-This composable function renders a [Lyst].
-Unchecked items are shown first, followed by checked items.
-The item description is editable in place. The checkbox is toggled when clicked.
-The list is scrollable.
- */
 @Composable
 private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewModel) {
-    val completeList = if (list.sorted.value) list.items.sortedBy { it.description.value } else list.items
-    val (checkedItems, uncheckedItems) = completeList.partition { it.checked.value }
-
-    var isCheckedItemsExpanded by remember { mutableStateOf(true) }
+    val isSorted by list.sorted.collectAsStateWithLifecycle()
+    val showChecked by list.showChecked.collectAsStateWithLifecycle()
+    val listToShow = list.items
+        .let { items ->
+            if (isSorted) {
+                items.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.description.value })
+            } else {
+                items
+            }
+        }
+        .filter { showChecked || !it.checked.value }
     val uncheckedItemsTextStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
     val checkedItemsTextStyle = TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
 
     LazyColumn(modifier = modifier) {
-
         items(
-            items = uncheckedItems,
+            items = listToShow,
             key = { item -> item.id }
         ) { item ->
-            LystItem(item = item, textStyle = uncheckedItemsTextStyle) { viewModel.deleteItem(list.id, item.id) }
+            LystItem(item = item, textStyle = if (item.checked.value) checkedItemsTextStyle else uncheckedItemsTextStyle) {
+                viewModel.deleteItem(list.id, item.id)
+            }
         }
 
         item {
             AddItem(list, textStyle = uncheckedItemsTextStyle)
-        }
-
-        if (checkedItems.isNotEmpty()) {
-            item {
-                CheckedItemsHeader(
-                    text = "${checkedItems.size} Checked item${if (checkedItems.size > 1) "s" else ""}",
-                    isExpanded = isCheckedItemsExpanded,
-                    onToggle = { isCheckedItemsExpanded = !isCheckedItemsExpanded }
-                )
-            }
-
-            if (isCheckedItemsExpanded) {
-                items(
-                    items = checkedItems,
-                    key = { item -> item.id }
-                ) { item ->
-                    AnimatedVisibility(visible = isCheckedItemsExpanded) {
-                        LystItem(item = item, textStyle = checkedItemsTextStyle) { viewModel.deleteItem(list.id, item.id) }
-                    }
-                }
-            }
         }
     }
 }
@@ -130,25 +105,6 @@ private fun LystItem(item: Lyst.Item, textStyle: TextStyle, onDelete: () -> Unit
         IconButton(onClick = onDelete) {
             Icon(painter = rememberVectorPainter(image = Icons.Default.Delete), contentDescription = "Delete", tint = Color.Black)
         }
-    }
-}
-
-@Composable
-private fun CheckedItemsHeader(text: String, isExpanded: Boolean, onToggle: () -> Unit) {
-    val rotationAngle by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "rotation")
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onToggle() }
-            .padding(start = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Filled.ArrowDropDown,
-            contentDescription = "Expand/Collapse",
-            modifier = Modifier.rotate(rotationAngle)
-        )
-        Text(text = text, modifier = Modifier.weight(1f))
     }
 }
 

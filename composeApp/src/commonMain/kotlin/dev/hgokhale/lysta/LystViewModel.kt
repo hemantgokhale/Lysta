@@ -20,9 +20,10 @@ sealed class NavigationDestination(val route: String) {
 class LystViewModel : ViewModel() {
     sealed class UIState(val title: String, val showFAB: Boolean) {
         class Home : UIState(title = "My lists", showFAB = true)
-        class Lyst(val lyst: dev.hgokhale.lysta.Lyst? = null, title: String = "") :
-            UIState(title = title, showFAB = false) {
+        class Lyst(val lyst: dev.hgokhale.lysta.Lyst? = null, title: String = "") : UIState(title = title, showFAB = false) {
             constructor(lyst: dev.hgokhale.lysta.Lyst) : this(lyst = lyst, title = lyst.name.value)
+
+            val isListReady: Boolean get() = lyst != null
         }
     }
 
@@ -32,7 +33,6 @@ class LystViewModel : ViewModel() {
     }
 
     data class SnackbarEvent(val message: String, val actionLabel: String, val action: (() -> Unit)? = null)
-
 
     private val _navigationEvents = Channel<NavigationEvent>(capacity = Channel.CONFLATED)
     val navigationEvents: ReceiveChannel<NavigationEvent> get() = _navigationEvents
@@ -75,10 +75,7 @@ class LystViewModel : ViewModel() {
     fun loadList(id: String) {
         _lists
             .firstOrNull { it.id == id }
-            ?.let {
-                _uiState.value = UIState.Lyst()
-                _uiState.value = UIState.Lyst(lyst = it)
-            }
+            ?.let { _uiState.value = UIState.Lyst(lyst = it) }
     }
 
     fun goHome() {
@@ -144,6 +141,22 @@ class LystViewModel : ViewModel() {
                     ?.let { lyst: Lyst ->
                         lyst.addItem(entry.second)
                     }
+            }
+    }
+
+    fun onSortClicked() {
+        _lists
+            .firstOrNull { it.id == (uiState.value as? UIState.Lyst)?.lyst?.id }
+            ?.let { lyst: Lyst ->
+                lyst.onSortClicked()
+            }
+    }
+
+    fun onShowCheckedClicked() {
+        _lists
+            .firstOrNull { it.id == (uiState.value as? UIState.Lyst)?.lyst?.id }
+            ?.let { lyst: Lyst ->
+                lyst.onShowCheckedClicked()
             }
     }
 
