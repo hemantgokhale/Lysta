@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 sealed class NavigationDestination(val route: String) {
     data object Home : NavigationDestination("home")
     data object Lyst : NavigationDestination("list/{listId}") {
-        fun routeFor(listId: dev.hgokhale.lysta.Lyst.Id) = "list/$listId"
+        fun routeFor(listId: String) = "list/$listId"
     }
 }
 
@@ -47,15 +47,15 @@ class LystViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     private var deletedLists = mutableListOf<Lyst>()
-    private var deletedItems = mutableListOf<Pair<Lyst.Id, Lyst.Item>>() // first = listId, second = item
+    private var deletedItems = mutableListOf<Pair<String, Lyst.Item>>() // first = listId, second = item
 
-    private fun createList(): Lyst.Id {
+    private fun createList(): String {
         val list = Lyst(name = "New list", listOf())
         _lists.add(list)
         return list.id
     }
 
-    fun onListClicked(id: Lyst.Id) {
+    fun onListClicked(id: String) {
         viewModelScope.launch { _navigationEvents.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(id))) }
     }
 
@@ -72,7 +72,7 @@ class LystViewModel : ViewModel() {
         viewModelScope.launch { _navigationEvents.send(NavigationEvent.NavigateBack) }
     }
 
-    fun loadList(id: Lyst.Id) {
+    fun loadList(id: String) {
         _lists
             .firstOrNull { it.id == id }
             ?.let {
@@ -85,7 +85,7 @@ class LystViewModel : ViewModel() {
         _uiState.value = UIState.Home()
     }
 
-    fun deleteList(id: Lyst.Id) {
+    fun deleteList(id: String) {
         viewModelScope.launch {
             _lists
                 .firstOrNull { it.id == id }
@@ -103,7 +103,7 @@ class LystViewModel : ViewModel() {
         }
     }
 
-    private fun undeleteList(id: Lyst.Id) {
+    private fun undeleteList(id: String) {
         deletedLists
             .firstOrNull { it.id == id }
             ?.let { lyst: Lyst ->
@@ -112,7 +112,7 @@ class LystViewModel : ViewModel() {
             }
     }
 
-    fun deleteItem(listId: Lyst.Id, itemId: Lyst.ItemId) {
+    fun deleteItem(listId: String, itemId: String) {
         viewModelScope.launch {
             _lists
                 .firstOrNull { it.id == listId }
@@ -134,7 +134,7 @@ class LystViewModel : ViewModel() {
         }
     }
 
-    private fun undeleteItem(listId: Lyst.Id, itemId: Lyst.ItemId) {
+    private fun undeleteItem(listId: String, itemId: String) {
         deletedItems
             .firstOrNull { it.first == listId && it.second.id == itemId }
             ?.let { entry ->
