@@ -50,23 +50,12 @@ fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystVie
 
 @Composable
 private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewModel) {
-    val isSorted by list.sorted.collectAsStateWithLifecycle()
-    val showChecked by list.showChecked.collectAsStateWithLifecycle()
-    val listToShow = list.items
-        .let { items ->
-            if (isSorted) {
-                items.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.description.value })
-            } else {
-                items
-            }
-        }
-        .filter { showChecked || !it.checked.value }
     val uncheckedItemsTextStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
     val checkedItemsTextStyle = TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
-
+    val itemsToRender by list.itemsToRender.collectAsStateWithLifecycle()
     LazyColumn(modifier = modifier) {
         items(
-            items = listToShow,
+            items = itemsToRender,
             key = { item -> item.id }
         ) { item ->
             LystItem(item = item, textStyle = if (item.checked.value) checkedItemsTextStyle else uncheckedItemsTextStyle) {

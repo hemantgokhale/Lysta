@@ -50,7 +50,7 @@ class LystViewModel : ViewModel() {
     private var deletedItems = mutableListOf<Pair<String, Lyst.Item>>() // first = listId, second = item
 
     private fun createList(): String {
-        val list = Lyst(name = "New list", listOf())
+        val list = Lyst(name = "New list", listOf(), viewModelScope)
         _lists.add(list)
         return list.id
     }
@@ -114,19 +114,17 @@ class LystViewModel : ViewModel() {
             _lists
                 .firstOrNull { it.id == listId }
                 ?.let { lyst: Lyst ->
-                    lyst.items
-                        .firstOrNull { it.id == itemId }
-                        ?.let { item: Lyst.Item ->
-                            lyst.deleteItem(item)
-                            deletedItems.add(Pair(listId, item))
-                            _snackbarEvents.send(
-                                SnackbarEvent(
-                                    message = "\"${item.description.value}\" deleted",
-                                    actionLabel = "Undo",
-                                    action = { undeleteItem(listId = listId, itemId = item.id) }
-                                )
+                    val item = lyst.deleteItem(itemId = itemId)
+                    if (item != null) {
+                        deletedItems.add(Pair(listId, item))
+                        _snackbarEvents.send(
+                            SnackbarEvent(
+                                message = "\"${item.description.value}\" deleted",
+                                actionLabel = "Undo",
+                                action = { undeleteItem(listId = listId, itemId = item.id) }
                             )
-                        }
+                        )
+                    }
                 }
         }
     }
@@ -181,7 +179,8 @@ class LystViewModel : ViewModel() {
                     Lyst.Item("Peaches", true),
                     Lyst.Item("Plums", true),
                     Lyst.Item("Pears", true),
-                )
+                ),
+                viewModelScope = viewModelScope
             )
         )
 
@@ -205,7 +204,8 @@ class LystViewModel : ViewModel() {
                     Lyst.Item("Radio", true),
                     Lyst.Item("Batteries", true),
                     Lyst.Item("Sleeping bag", true),
-                )
+                ),
+                viewModelScope = viewModelScope
             )
         )
     }
