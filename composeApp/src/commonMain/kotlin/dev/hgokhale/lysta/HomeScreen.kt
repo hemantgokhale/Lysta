@@ -34,11 +34,12 @@ fun HomeScreen(modifier: Modifier = Modifier, viewModel: LystViewModel) {
 
 @Composable
 private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
+    val lists by viewModel.lists.collectAsStateWithLifecycle()
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(16.dp)
     ) {
         items(
-            items = viewModel.lists,
+            items = lists,
             key = { item -> item.id }
         ) { item ->
             Row(
