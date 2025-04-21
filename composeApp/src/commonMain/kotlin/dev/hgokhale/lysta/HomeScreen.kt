@@ -14,18 +14,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier, viewModel: LystViewModel) {
     LaunchedEffect(Unit) { viewModel.goHome() }
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     (uiState as? LystViewModel.UIState.Home)
         ?.let { Home(modifier = modifier, viewModel = viewModel) }
@@ -34,11 +34,12 @@ fun HomeScreen(modifier: Modifier = Modifier, viewModel: LystViewModel) {
 
 @Composable
 private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
+    val lists by viewModel.lists.collectAsStateWithLifecycle()
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(16.dp)
     ) {
         items(
-            items = viewModel.lists,
+            items = lists,
             key = { item -> item.id }
         ) { item ->
             Row(

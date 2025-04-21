@@ -1,12 +1,11 @@
 package dev.hgokhale.lysta
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -20,9 +19,10 @@ sealed class NavigationDestination(val route: String) {
 class LystViewModel : ViewModel() {
     sealed class UIState(val title: String, val showFAB: Boolean) {
         class Home : UIState(title = "My lists", showFAB = true)
-        class Lyst(val lyst: dev.hgokhale.lysta.Lyst? = null, title: String = "") :
-            UIState(title = title, showFAB = false) {
+        class Lyst(val lyst: dev.hgokhale.lysta.Lyst? = null, title: String = "") : UIState(title = title, showFAB = false) {
             constructor(lyst: dev.hgokhale.lysta.Lyst) : this(lyst = lyst, title = lyst.name.value)
+
+            val isListReady: Boolean get() = lyst != null
         }
     }
 
@@ -33,25 +33,23 @@ class LystViewModel : ViewModel() {
 
     data class SnackbarEvent(val message: String, val actionLabel: String, val action: (() -> Unit)? = null)
 
-
     private val _navigationEvents = Channel<NavigationEvent>(capacity = Channel.CONFLATED)
     val navigationEvents: ReceiveChannel<NavigationEvent> get() = _navigationEvents
 
     private val _snackbarEvents = Channel<SnackbarEvent>(capacity = Channel.CONFLATED)
     val snackbarEvents: ReceiveChannel<SnackbarEvent> get() = _snackbarEvents
 
-    private val _lists: SnapshotStateList<Lyst> = mutableStateListOf()
-    val lists: List<Lyst> get() = _lists
+    private val _lists = MutableStateFlow(sampleLists())
+    val lists: StateFlow<List<Lyst>> = _lists.asStateFlow()
 
     private val _uiState = MutableStateFlow<UIState>(UIState.Home())
     val uiState = _uiState.asStateFlow()
 
-    private var deletedLists = mutableListOf<Lyst>()
-    private var deletedItems = mutableListOf<Pair<String, Lyst.Item>>() // first = listId, second = item
+    private var deletedList: Pair<Int, Lyst>? = null // first = index, second = list
 
     private fun createList(): String {
-        val list = Lyst(name = "New list", listOf())
-        _lists.add(list)
+        val list = Lyst(name = "New list", listOf(), viewModelScope)
+        _lists.value += list
         return list.id
     }
 
@@ -73,12 +71,9 @@ class LystViewModel : ViewModel() {
     }
 
     fun loadList(id: String) {
-        _lists
+        _lists.value
             .firstOrNull { it.id == id }
-            ?.let {
-                _uiState.value = UIState.Lyst()
-                _uiState.value = UIState.Lyst(lyst = it)
-            }
+            ?.let { _uiState.value = UIState.Lyst(lyst = it) }
     }
 
     fun goHome() {
@@ -87,46 +82,42 @@ class LystViewModel : ViewModel() {
 
     fun deleteList(id: String) {
         viewModelScope.launch {
-            _lists
-                .firstOrNull { it.id == id }
-                ?.let { lyst: Lyst ->
-                    _lists.remove(lyst)
-                    deletedLists.add(lyst)
-                    _snackbarEvents.send(
-                        SnackbarEvent(
-                            message = "\"${lyst.name.value}\" deleted",
-                            actionLabel = "Undo",
-                            action = { undeleteList(id = id) }
-                        )
+            val index = _lists.value.indexOfFirst { it.id == id }
+            if (index != -1) {
+                val listToDelete = _lists.value[index]
+                _lists.value -= listToDelete
+                deletedList = Pair(index, listToDelete)
+                _snackbarEvents.send(
+                    SnackbarEvent(
+                        message = "\"${listToDelete.name.value}\" deleted",
+                        actionLabel = "Undo",
+                        action = { undeleteList() }
                     )
-                }
+                )
+            }
         }
     }
 
-    private fun undeleteList(id: String) {
-        deletedLists
-            .firstOrNull { it.id == id }
-            ?.let { lyst: Lyst ->
-                deletedLists.remove(lyst)
-                _lists.add(lyst)
+    private fun undeleteList() {
+        deletedList
+            ?.let { (index, list) ->
+                _lists.value = _lists.value.toMutableList().also { it.add(index, list) }
+                deletedList = null
             }
     }
 
     fun deleteItem(listId: String, itemId: String) {
         viewModelScope.launch {
-            _lists
+            _lists.value
                 .firstOrNull { it.id == listId }
                 ?.let { lyst: Lyst ->
-                    lyst.items
-                        .firstOrNull { it.id == itemId }
-                        ?.let { item: Lyst.Item ->
-                            lyst.deleteItem(item)
-                            deletedItems.add(Pair(listId, item))
+                    lyst.deleteItem(itemId)
+                        ?.let { item ->
                             _snackbarEvents.send(
                                 SnackbarEvent(
-                                    message = "\"${item.description.value}\" deleted",
+                                    message = "\"${item.description}\" deleted",
                                     actionLabel = "Undo",
-                                    action = { undeleteItem(listId = listId, itemId = item.id) }
+                                    action = { lyst.undeleteItem() }
                                 )
                             )
                         }
@@ -134,66 +125,67 @@ class LystViewModel : ViewModel() {
         }
     }
 
-    private fun undeleteItem(listId: String, itemId: String) {
-        deletedItems
-            .firstOrNull { it.first == listId && it.second.id == itemId }
-            ?.let { entry ->
-                deletedItems.remove(entry)
-                _lists
-                    .firstOrNull { it.id == listId }
-                    ?.let { lyst: Lyst ->
-                        lyst.addItem(entry.second)
-                    }
+    fun onSortClicked() {
+        _lists.value
+            .firstOrNull { it.id == (uiState.value as? UIState.Lyst)?.lyst?.id }
+            ?.let { lyst: Lyst ->
+                lyst.onSortClicked()
             }
     }
 
-    init {
-        _lists.add(
-            Lyst(
-                "Groceries",
-                listOf(
-                    Lyst.Item("Milk", false),
-                    Lyst.Item("Eggs", false),
-                    Lyst.Item("Bread", true),
-                    Lyst.Item("Butter", true),
-                    Lyst.Item("Cheese", true),
-                    Lyst.Item("Apples", false),
-                    Lyst.Item("Oranges", false),
-                    Lyst.Item("Bananas", false),
-                    Lyst.Item("Blueberries", true),
-                    Lyst.Item("Raspberries", true),
-                    Lyst.Item("Grapes", false),
-                    Lyst.Item("Strawberries", false),
-                    Lyst.Item("Blackberries", true),
-                    Lyst.Item("Peaches", true),
-                    Lyst.Item("Plums", true),
-                    Lyst.Item("Pears", true),
-                )
-            )
-        )
-
-        _lists.add(
-            Lyst(
-                "Backpacking",
-                listOf(
-                    Lyst.Item("Tent", false),
-                    Lyst.Item("Stove", false),
-                    Lyst.Item("Fuel", true),
-                    Lyst.Item("Backpack", true),
-                    Lyst.Item("Rain fly", true),
-                    Lyst.Item("Food", false),
-                    Lyst.Item("Water filter", false),
-                    Lyst.Item("Water bottle", false),
-                    Lyst.Item("Shoes", true),
-                    Lyst.Item("Hat", true),
-                    Lyst.Item("Sunglasses", false),
-                    Lyst.Item("First aid kit", false),
-                    Lyst.Item("Headlamp", true),
-                    Lyst.Item("Radio", true),
-                    Lyst.Item("Batteries", true),
-                    Lyst.Item("Sleeping bag", true),
-                )
-            )
-        )
+    fun onShowCheckedClicked() {
+        _lists.value
+            .firstOrNull { it.id == (uiState.value as? UIState.Lyst)?.lyst?.id }
+            ?.let { lyst: Lyst ->
+                lyst.onShowCheckedClicked()
+            }
     }
+
+    private fun sampleLists(): List<Lyst> = listOf(
+        Lyst(
+            "Groceries",
+            listOf(
+                Lyst.Item("Milk", false),
+                Lyst.Item("Eggs", false),
+                Lyst.Item("Bread", true),
+                Lyst.Item("Butter", true),
+                Lyst.Item("Cheese", true),
+                Lyst.Item("Apples", false),
+                Lyst.Item("Oranges", false),
+                Lyst.Item("Bananas", false),
+                Lyst.Item("Blueberries", true),
+                Lyst.Item("Raspberries", true),
+                Lyst.Item("Grapes", false),
+                Lyst.Item("Strawberries", false),
+                Lyst.Item("Blackberries", true),
+                Lyst.Item("Peaches", true),
+                Lyst.Item("Plums", true),
+                Lyst.Item("Pears", true),
+            ),
+            viewModelScope = viewModelScope
+        ),
+
+        Lyst(
+            "Backpacking",
+            listOf(
+                Lyst.Item("Tent", false),
+                Lyst.Item("Stove", false),
+                Lyst.Item("Fuel", true),
+                Lyst.Item("Backpack", true),
+                Lyst.Item("Rain fly", true),
+                Lyst.Item("Food", false),
+                Lyst.Item("Water filter", false),
+                Lyst.Item("Water bottle", false),
+                Lyst.Item("Shoes", true),
+                Lyst.Item("Hat", true),
+                Lyst.Item("Sunglasses", false),
+                Lyst.Item("First aid kit", false),
+                Lyst.Item("Headlamp", true),
+                Lyst.Item("Radio", true),
+                Lyst.Item("Batteries", true),
+                Lyst.Item("Sleeping bag", true),
+            ),
+            viewModelScope = viewModelScope
+        )
+    )
 }
