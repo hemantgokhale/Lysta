@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
@@ -58,7 +59,7 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewM
             items = itemsToRender,
             key = { item -> item.id }
         ) { item ->
-            LystItem(item = item, textStyle = if (item.checked.value) checkedItemsTextStyle else uncheckedItemsTextStyle) {
+            LystItem(list = list, item = item, textStyle = if (item.checked) checkedItemsTextStyle else uncheckedItemsTextStyle) {
                 viewModel.deleteItem(list.id, item.id)
             }
         }
@@ -70,22 +71,27 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewM
 }
 
 @Composable
-private fun LystItem(item: Lyst.Item, textStyle: TextStyle, onDelete: () -> Unit) {
+private fun LystItem(list: Lyst, item: Lyst.Item, textStyle: TextStyle, onDelete: () -> Unit) {
     val focusManager = LocalFocusManager.current
-
+    var description by remember { mutableStateOf(item.description) }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(
-            checked = item.checked.value,
-            onCheckedChange = { item.checked.value = it },
+            checked = item.checked,
+            onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },
         )
         BasicTextField(
-            value = item.description.value,
-            onValueChange = { item.description.value = it },
+            value = description,
+            onValueChange = { description = it },
             modifier = Modifier
-                .weight(1f),
+                .weight(1f)
+                .onFocusChanged { focusState ->
+                    if (!focusState.isFocused) {
+                        list.onItemDescriptionChanged(itemId = item.id, description = description)
+                    }
+                },
             textStyle = textStyle,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),

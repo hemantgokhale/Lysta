@@ -115,7 +115,7 @@ class LystViewModel : ViewModel() {
                         ?.let { item ->
                             _snackbarEvents.send(
                                 SnackbarEvent(
-                                    message = "\"${item.description.value}\" deleted",
+                                    message = "\"${item.description}\" deleted",
                                     actionLabel = "Undo",
                                     action = { lyst.undeleteItem() }
                                 )

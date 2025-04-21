@@ -1,7 +1,5 @@
 package dev.hgokhale.lysta
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,6 +11,10 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope) {
+    data class Item(val description: String, val checked: Boolean) {
+        val id: String = Uuid.random().toString()
+    }
+
     val id = Uuid.random().toString()
     private val _items: MutableStateFlow<List<Item>> = MutableStateFlow(itemsValue)
 
@@ -27,8 +29,8 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
 
     val itemsToRender = combine(_items, _sorted, _showChecked) { items, sorted, showChecked ->
         items
-            .filter { item -> showChecked || !item.checked.value }
-            .let { list -> if (sorted) list.sortedBy { it.description.value.lowercase() } else list }
+            .filter { item -> showChecked || !item.checked }
+            .let { list -> if (sorted) list.sortedBy { it.description.lowercase() } else list }
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -44,12 +46,6 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
 
     fun onNameChanged(name: String) {
         _name.value = name
-    }
-
-    class Item(descriptionValue: String, checkedValue: Boolean) {
-        val checked: MutableState<Boolean> = mutableStateOf(checkedValue)
-        val description: MutableState<String> = mutableStateOf(descriptionValue)
-        val id = Uuid.random().toString()
     }
 
     fun addItem(description: String = "", checked: Boolean = false) {
@@ -72,6 +68,26 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
         deletedItem?.let { (index, item) ->
             _items.value = _items.value.toMutableList().apply { add(index, item) }
             deletedItem = null
+        }
+    }
+
+    fun onItemDescriptionChanged(itemId: String, description: String) {
+        _items.value = _items.value.map { item ->
+            if (item.id == itemId) {
+                item.copy(description = description)
+            } else {
+                item
+            }
+        }
+    }
+
+    fun onItemCheckedChanged(itemId: String, isChecked: Boolean) {
+        _items.value = _items.value.map { item ->
+            if (item.id == itemId) {
+                item.copy(checked = isChecked)
+            } else {
+                item
+            }
         }
     }
 
