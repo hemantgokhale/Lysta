@@ -32,6 +32,8 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private var deletedItem: Pair<Int, Item>? = null // first = index, second = item
+
     fun onShowCheckedClicked() {
         _showChecked.value = !showChecked.value
     }
@@ -50,20 +52,27 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
         val id = Uuid.random().toString()
     }
 
-    fun addItem(item: Item) {
-        _items.value += item
-    }
-
     fun addItem(description: String = "", checked: Boolean = false) {
-        addItem(Item(description, checked))
+        _items.value += Item(description, checked)
     }
 
     fun deleteItem(itemId: String): Item? {
-        val item = _items.value.firstOrNull { it.id == itemId }
-        if (item != null) {
-            _items.value -= item
+        val index = _items.value.indexOfFirst { it.id == itemId }
+        return if (index != -1) {
+            val itemToDelete = _items.value[index]
+            _items.value -= itemToDelete
+            deletedItem = Pair(index, itemToDelete)
+            itemToDelete
+        } else {
+            null
         }
-        return item
+    }
+
+    fun undeleteItem() {
+        deletedItem?.let { (index, item) ->
+            _items.value = _items.value.toMutableList().apply { add(index, item) }
+            deletedItem = null
+        }
     }
 
     override fun toString(): String = "Lyst: $name"
