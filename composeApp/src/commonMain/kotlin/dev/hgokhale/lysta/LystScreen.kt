@@ -2,6 +2,7 @@ package dev.hgokhale.lysta
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -54,19 +55,19 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewM
     val uncheckedItemsTextStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
     val checkedItemsTextStyle = TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
     val itemsToRender by list.itemsToRender.collectAsStateWithLifecycle()
-    LazyColumn(modifier = modifier) {
-        items(
-            items = itemsToRender,
-            key = { item -> item.id }
-        ) { item ->
-            LystItem(list = list, item = item, textStyle = if (item.checked) checkedItemsTextStyle else uncheckedItemsTextStyle) {
-                viewModel.deleteItem(list.id, item.id)
+    Column(modifier = modifier) {
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            items(
+                items = itemsToRender,
+                key = { item -> item.id }
+            ) { item ->
+                LystItem(list = list, item = item, textStyle = if (item.checked) checkedItemsTextStyle else uncheckedItemsTextStyle) {
+                    viewModel.deleteItem(list.id, item.id)
+                }
             }
         }
 
-        item {
-            AddItem(list, textStyle = uncheckedItemsTextStyle)
-        }
+        AddItem(list, textStyle = uncheckedItemsTextStyle)
     }
 }
 
