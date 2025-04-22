@@ -47,6 +47,14 @@ class LystViewModel : ViewModel() {
 
     private var deletedList: Pair<Int, Lyst>? = null // first = index, second = list
 
+    fun moveList(from: Int, to: Int) {
+        if (from != to && from in _lists.value.indices && to in _lists.value.indices) {
+            val mutableList = _lists.value.toMutableList()
+            mutableList.add(to, mutableList.removeAt(from))
+            _lists.value = mutableList
+        }
+    }
+
     private fun createList(): String {
         val list = Lyst(name = "New list", listOf(), viewModelScope)
         _lists.value += list
