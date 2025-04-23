@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -89,7 +90,11 @@ private fun DismissibleItem(viewModel: LystViewModel, item: Lyst, scope: Reorder
                     SwipeToDismissBoxValue.StartToEnd, SwipeToDismissBoxValue.EndToStart -> Color.Red
                 }
             )
-            Row(Modifier.fillMaxSize().background(color), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxSize().background(color),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.padding(16.dp), tint = Color.White)
             }
         },
