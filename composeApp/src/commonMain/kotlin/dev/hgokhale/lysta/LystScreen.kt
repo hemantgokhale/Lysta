@@ -115,10 +115,13 @@ private fun DismissibleItem(viewModel: LystViewModel, list: Lyst, item: Lyst.Ite
 private fun LystItem(list: Lyst, item: Lyst.Item) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
-    val textStyle = if (item.checked)
-        TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
-    else
-        TextStyle(color = MaterialTheme.colorScheme.onBackground)
+    val colorScheme = MaterialTheme.colorScheme
+    val textStyle = remember(item.checked) {
+        if (item.checked)
+            TextStyle(color = colorScheme.onBackground, textDecoration = TextDecoration.LineThrough)
+        else
+            TextStyle(color = colorScheme.onBackground)
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -156,12 +159,10 @@ private fun LystItem(list: Lyst, item: Lyst.Item) {
 @Composable
 private fun AddItem(list: Lyst) {
     var inEditMode by remember { mutableStateOf(false) }
-    val textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
     if (inEditMode) {
         ItemEditor(
             textToEdit = "",
             checkedToEdit = false,
-            textStyle = textStyle,
             onDone = { description, checked ->
                 if (description.isNotBlank()) list.addItem(description, checked)
                 inEditMode = false
@@ -178,7 +179,7 @@ private fun AddItem(list: Lyst) {
             IconButton(onClick = { inEditMode = true }) {
                 Icon(painter = rememberVectorPainter(image = Icons.Filled.Add), contentDescription = "Add item", tint = Color.Black)
             }
-            Text("Add item", style = textStyle)
+            Text("Add item", color = MaterialTheme.colorScheme.onBackground)
         }
     }
 }
@@ -187,7 +188,6 @@ private fun AddItem(list: Lyst) {
 private fun ItemEditor(
     textToEdit: String,
     checkedToEdit: Boolean,
-    textStyle: TextStyle,
     onDone: (String, Boolean) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -206,7 +206,7 @@ private fun ItemEditor(
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
-            textStyle = textStyle,
+            textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
             singleLine = true
