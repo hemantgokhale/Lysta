@@ -1,10 +1,15 @@
 package dev.hgokhale.lysta
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
@@ -19,7 +24,10 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,7 +45,11 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import lysta.composeapp.generated.resources.Res
+import lysta.composeapp.generated.resources.ic_drag_handle
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystViewModel) {
@@ -52,29 +64,62 @@ fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystVie
 
 @Composable
 private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewModel) {
-    val uncheckedItemsTextStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
-    val checkedItemsTextStyle = TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
     val itemsToRender by list.itemsToRender.collectAsStateWithLifecycle()
     Column(modifier = modifier) {
         LazyColumn(modifier = Modifier.weight(1f)) {
-            items(
-                items = itemsToRender,
-                key = { item -> item.id }
-            ) { item ->
-                LystItem(list = list, item = item, textStyle = if (item.checked) checkedItemsTextStyle else uncheckedItemsTextStyle) {
-                    viewModel.deleteItem(list.id, item.id)
-                }
+            items(items = itemsToRender, key = { item -> item.id }) { item ->
+                DismissibleItem(viewModel = viewModel, list = list, item = item)
             }
         }
 
-        AddItem(list, textStyle = uncheckedItemsTextStyle)
+        AddItem(list)
     }
 }
 
 @Composable
-private fun LystItem(list: Lyst, item: Lyst.Item, textStyle: TextStyle, onDelete: () -> Unit) {
+private fun DismissibleItem(viewModel: LystViewModel, list: Lyst, item: Lyst.Item) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                viewModel.deleteItem(list.id, item.id)
+                true
+            } else {
+                false
+            }
+        }
+    )
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            val color by animateColorAsState(
+                when (dismissState.targetValue) {
+                    SwipeToDismissBoxValue.Settled -> MaterialTheme.colorScheme.background
+                    SwipeToDismissBoxValue.StartToEnd, SwipeToDismissBoxValue.EndToStart -> Color.Red
+                }
+            )
+            Row(
+                modifier = Modifier.fillMaxSize().background(color),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.padding(16.dp), tint = Color.White)
+            }
+        },
+        enableDismissFromStartToEnd = false
+    ) {
+        LystItem(list = list, item = item)
+    }
+}
+
+@Composable
+private fun LystItem(list: Lyst, item: Lyst.Item) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
+    val textStyle = if (item.checked)
+        TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
+    else
+        TextStyle(color = MaterialTheme.colorScheme.onBackground)
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -98,16 +143,20 @@ private fun LystItem(list: Lyst, item: Lyst.Item, textStyle: TextStyle, onDelete
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true
         )
-        IconButton(onClick = onDelete) {
-            Icon(painter = rememberVectorPainter(image = Icons.Default.Delete), contentDescription = "Delete", tint = Color.Black)
+        IconButton(onClick = { }) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_drag_handle),
+                contentDescription = "Move item",
+                tint = MaterialTheme.colorScheme.onBackground,
+            )
         }
     }
 }
 
 @Composable
-private fun AddItem(list: Lyst, textStyle: TextStyle) {
+private fun AddItem(list: Lyst) {
     var inEditMode by remember { mutableStateOf(false) }
-
+    val textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
     if (inEditMode) {
         ItemEditor(
             textToEdit = "",
