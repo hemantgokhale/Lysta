@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -53,7 +52,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                 Surface(shadowElevation = elevation) {
                     SwipeToDeleteItem(onDelete = { viewModel.deleteList(item.id) }) {
                         Row(
-                            modifier = Modifier.clickable { viewModel.onListClicked(item.id) }.padding(horizontal = 16.dp).fillMaxWidth(),
+                            modifier = Modifier.clickable { viewModel.onListClicked(item.id) }.padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(text = item.name.value, modifier = Modifier.weight(1f))

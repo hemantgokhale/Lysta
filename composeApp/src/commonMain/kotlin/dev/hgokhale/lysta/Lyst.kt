@@ -91,5 +91,14 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
         }
     }
 
+    fun moveItem(from: Int, to: Int) {
+        if (from != to && from in _items.value.indices && to in _items.value.indices) {
+            val mutableList = _items.value.toMutableList()
+            mutableList.add(to, mutableList.removeAt(from))
+            _items.value = mutableList
+        }
+    }
+
+
     override fun toString(): String = "Lyst: $name"
 }

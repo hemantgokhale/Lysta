@@ -1,5 +1,6 @@
 package dev.hgokhale.lysta
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Column
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,6 +20,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,10 +39,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_drag_handle
 import org.jetbrains.compose.resources.painterResource
+import sh.calvin.reorderable.ReorderableCollectionItemScope
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
 fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystViewModel) {
@@ -55,21 +62,30 @@ fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystVie
 @Composable
 private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewModel) {
     val itemsToRender by list.itemsToRender.collectAsStateWithLifecycle()
+    val lazyListState = rememberLazyListState()
+    val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        list.moveItem(from.index, to.index)
+    }
+
     Column(modifier = modifier) {
-        LazyColumn(modifier = Modifier.weight(1f)) {
+        LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
             items(items = itemsToRender, key = { item -> item.id }) { item ->
-                SwipeToDeleteItem(onDelete = {viewModel.deleteItem(list.id, item.id)}) {
-                    LystItem(list = list, item = item)
+                ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
+                    val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
+                    Surface(shadowElevation = elevation) {
+                        SwipeToDeleteItem(onDelete = { viewModel.deleteItem(list.id, item.id) }) {
+                            LystItem(list = list, item = item, reorderableCollectionItemScope = this)
+                        }
+                    }
                 }
             }
         }
-
         AddItem(list)
     }
 }
 
 @Composable
-private fun LystItem(list: Lyst, item: Lyst.Item) {
+private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope: ReorderableCollectionItemScope) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
     val colorScheme = MaterialTheme.colorScheme
@@ -80,10 +96,7 @@ private fun LystItem(list: Lyst, item: Lyst.Item) {
             TextStyle(color = colorScheme.onBackground)
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
             checked = item.checked,
             onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },
@@ -103,7 +116,7 @@ private fun LystItem(list: Lyst, item: Lyst.Item) {
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true
         )
-        IconButton(onClick = { }) {
+        IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
             Icon(
                 painter = painterResource(Res.drawable.ic_drag_handle),
                 contentDescription = "Move item",
@@ -152,7 +165,7 @@ private fun ItemEditor(
     var text by remember { mutableStateOf(textToEdit) }
     var checked by remember { mutableStateOf(checkedToEdit) }
 
-    Row(modifier = Modifier.fillMaxWidth().focusGroup(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.focusGroup(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
             checked = checked,
             onCheckedChange = { checked = it },
