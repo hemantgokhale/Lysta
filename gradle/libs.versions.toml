@@ -9,7 +9,8 @@ compose-navigation = "2.8.0-alpha10"
 kotlin = "2.1.20"
 kotlinx-coroutines = "1.10.1"
 ktor = "3.1.1"
-logback = "1.5.16"
+logback = "1.5.17"
+reorderable = "2.4.3"
 
 [libraries]
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
@@ -21,6 +22,7 @@ logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 ktor-server-tests = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
+reorderable = {module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable"}
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

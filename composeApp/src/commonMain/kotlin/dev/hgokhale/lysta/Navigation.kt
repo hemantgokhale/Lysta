@@ -1,6 +1,7 @@
 package dev.hgokhale.lysta
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -17,7 +18,7 @@ fun NavGraph(
     NavHost(
         navController = navController,
         startDestination = NavigationDestination.Home.route,
-        modifier = Modifier.padding(paddingValues)
+        modifier = Modifier.padding(paddingValues).imePadding()
     ) {
         composable(NavigationDestination.Home.route) { HomeScreen(viewModel = viewModel) }
         composable(NavigationDestination.Lyst.route) { backStackEntry ->

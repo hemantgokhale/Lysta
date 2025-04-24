@@ -1,11 +1,14 @@
 package dev.hgokhale.lysta
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,11 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,7 +39,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import lysta.composeapp.generated.resources.Res
+import lysta.composeapp.generated.resources.ic_drag_handle
+import org.jetbrains.compose.resources.painterResource
+import sh.calvin.reorderable.ReorderableCollectionItemScope
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
 fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystViewModel) {
@@ -51,33 +61,42 @@ fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystVie
 
 @Composable
 private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewModel) {
-    val uncheckedItemsTextStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
-    val checkedItemsTextStyle = TextStyle(color = Color.Gray, textDecoration = TextDecoration.LineThrough)
     val itemsToRender by list.itemsToRender.collectAsStateWithLifecycle()
-    LazyColumn(modifier = modifier) {
-        items(
-            items = itemsToRender,
-            key = { item -> item.id }
-        ) { item ->
-            LystItem(list = list, item = item, textStyle = if (item.checked) checkedItemsTextStyle else uncheckedItemsTextStyle) {
-                viewModel.deleteItem(list.id, item.id)
+    val lazyListState = rememberLazyListState()
+    val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        list.moveItem(from.index, to.index)
+    }
+
+    Column(modifier = modifier) {
+        LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
+            items(items = itemsToRender, key = { item -> item.id }) { item ->
+                ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
+                    val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
+                    Surface(shadowElevation = elevation) {
+                        SwipeToDeleteItem(onDelete = { viewModel.deleteItem(list.id, item.id) }) {
+                            LystItem(list = list, item = item, reorderableCollectionItemScope = this)
+                        }
+                    }
+                }
             }
         }
-
-        item {
-            AddItem(list, textStyle = uncheckedItemsTextStyle)
-        }
+        AddItem(list)
     }
 }
 
 @Composable
-private fun LystItem(list: Lyst, item: Lyst.Item, textStyle: TextStyle, onDelete: () -> Unit) {
+private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope: ReorderableCollectionItemScope) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val textStyle = remember(item.checked) {
+        if (item.checked)
+            TextStyle(color = colorScheme.onBackground, textDecoration = TextDecoration.LineThrough)
+        else
+            TextStyle(color = colorScheme.onBackground)
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
             checked = item.checked,
             onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },
@@ -97,21 +116,23 @@ private fun LystItem(list: Lyst, item: Lyst.Item, textStyle: TextStyle, onDelete
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true
         )
-        IconButton(onClick = onDelete) {
-            Icon(painter = rememberVectorPainter(image = Icons.Default.Delete), contentDescription = "Delete", tint = Color.Black)
+        IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_drag_handle),
+                contentDescription = "Move item",
+                tint = MaterialTheme.colorScheme.onBackground,
+            )
         }
     }
 }
 
 @Composable
-private fun AddItem(list: Lyst, textStyle: TextStyle) {
+private fun AddItem(list: Lyst) {
     var inEditMode by remember { mutableStateOf(false) }
-
     if (inEditMode) {
         ItemEditor(
             textToEdit = "",
             checkedToEdit = false,
-            textStyle = textStyle,
             onDone = { description, checked ->
                 if (description.isNotBlank()) list.addItem(description, checked)
                 inEditMode = false
@@ -128,7 +149,7 @@ private fun AddItem(list: Lyst, textStyle: TextStyle) {
             IconButton(onClick = { inEditMode = true }) {
                 Icon(painter = rememberVectorPainter(image = Icons.Filled.Add), contentDescription = "Add item", tint = Color.Black)
             }
-            Text("Add item", style = textStyle)
+            Text("Add item", color = MaterialTheme.colorScheme.onBackground)
         }
     }
 }
@@ -137,7 +158,6 @@ private fun AddItem(list: Lyst, textStyle: TextStyle) {
 private fun ItemEditor(
     textToEdit: String,
     checkedToEdit: Boolean,
-    textStyle: TextStyle,
     onDone: (String, Boolean) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -145,7 +165,7 @@ private fun ItemEditor(
     var text by remember { mutableStateOf(textToEdit) }
     var checked by remember { mutableStateOf(checkedToEdit) }
 
-    Row(modifier = Modifier.fillMaxWidth().focusGroup(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.focusGroup(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
             checked = checked,
             onCheckedChange = { checked = it },
@@ -156,7 +176,7 @@ private fun ItemEditor(
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
-            textStyle = textStyle,
+            textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
             singleLine = true
