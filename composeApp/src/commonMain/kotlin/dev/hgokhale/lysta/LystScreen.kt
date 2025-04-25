@@ -33,8 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -144,7 +142,7 @@ private fun AddItem(list: Lyst) {
             // We don't really need an IconButton here since the entire row is clickable, but using it makes this item align with all other items.
             // This is because Compose automatically adds padding around a tappable target so that it has a minimum recommended touch target size.
             IconButton(onClick = { inEditMode = true }) {
-                Icon(painter = rememberVectorPainter(image = Icons.Filled.Add), contentDescription = "Add item", tint = Color.Black)
+                Icon(imageVector = Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onBackground)
             }
             Text("Add item", color = MaterialTheme.colorScheme.onBackground)
         }
@@ -179,10 +177,10 @@ private fun ItemEditor(
             singleLine = true
         )
         IconButton(onClick = { onDone(text, checked) }) {
-            Icon(painter = rememberVectorPainter(image = Icons.Default.Check), contentDescription = "Done", tint = Color.Black)
+            Icon(imageVector = Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.onBackground)
         }
         IconButton(onClick = onCancel) {
-            Icon(painter = rememberVectorPainter(image = Icons.Default.Clear), contentDescription = "Cancel", tint = Color.Black)
+            Icon(imageVector = Icons.Default.Clear, contentDescription = "Cancel", tint = MaterialTheme.colorScheme.onBackground)
         }
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
