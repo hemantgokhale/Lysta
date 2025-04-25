@@ -88,13 +88,8 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewM
 private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope: ReorderableCollectionItemScope) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
+    val listIsSorted by list.sorted.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
-    val textStyle = remember(item.checked) {
-        if (item.checked)
-            TextStyle(color = colorScheme.onBackground, textDecoration = TextDecoration.LineThrough)
-        else
-            TextStyle(color = colorScheme.onBackground)
-    }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
@@ -111,17 +106,19 @@ private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope
                         list.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
-            textStyle = textStyle,
+            textStyle = TextStyle(color = colorScheme.onBackground, textDecoration = if (item.checked) TextDecoration.LineThrough else null),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true
         )
-        IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_drag_handle),
-                contentDescription = "Move item",
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
+        if (!listIsSorted) {
+            IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_drag_handle),
+                    contentDescription = "Move item",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            }
         }
     }
 }
