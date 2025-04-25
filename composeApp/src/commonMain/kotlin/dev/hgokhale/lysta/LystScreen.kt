@@ -87,7 +87,6 @@ private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
     val listIsSorted by list.sorted.collectAsStateWithLifecycle()
-    val colorScheme = MaterialTheme.colorScheme
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
@@ -104,7 +103,7 @@ private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope
                         list.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
-            textStyle = TextStyle(color = colorScheme.onBackground, textDecoration = if (item.checked) TextDecoration.LineThrough else null),
+            textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground, textDecoration = if (item.checked) TextDecoration.LineThrough else null),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true
