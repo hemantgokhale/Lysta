@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,8 +72,9 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewM
                 ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
                     val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
                     Surface(shadowElevation = elevation) {
-                        SwipeToDeleteItem(onDelete = { viewModel.deleteItem(list.id, item.id) }) {
-                            LystItem(list = list, item = item, reorderableCollectionItemScope = this)
+                        val onDelete = { viewModel.deleteItem(list.id, item.id) }
+                        SwipeToDeleteItem(onDelete = onDelete) {
+                            LystItem(list = list, item = item, onDelete = onDelete, reorderableCollectionItemScope = this)
                         }
                     }
                 }
@@ -83,10 +85,11 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewM
 }
 
 @Composable
-private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope: ReorderableCollectionItemScope) {
+private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reorderableCollectionItemScope: ReorderableCollectionItemScope) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
     val listIsSorted by list.sorted.collectAsStateWithLifecycle()
+    val isMobile = remember { getPlatform().isMobile }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
@@ -108,6 +111,15 @@ private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true
         )
+        if (!isMobile) {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Delete item",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+        }
         if (!listIsSorted) {
             IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
                 Icon(

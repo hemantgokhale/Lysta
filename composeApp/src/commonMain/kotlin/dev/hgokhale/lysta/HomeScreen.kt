@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -16,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -38,6 +41,7 @@ fun HomeScreen(modifier: Modifier = Modifier, viewModel: LystViewModel) {
 
 @Composable
 private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
+    val isMobile = remember { getPlatform().isMobile }
     val lists by viewModel.lists.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -50,12 +54,22 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                 val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
                 val reorderableCollectionItemScope = this
                 Surface(shadowElevation = elevation) {
-                    SwipeToDeleteItem(onDelete = { viewModel.deleteList(item.id) }) {
+                    val onDelete = { viewModel.deleteList(item.id) }
+                    SwipeToDeleteItem(onDelete = onDelete) {
                         Row(
                             modifier = Modifier.clickable { viewModel.onListClicked(item.id) }.padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(text = item.name.value, modifier = Modifier.weight(1f))
+                            if (!isMobile) {
+                                IconButton(onClick = onDelete) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Delete item",
+                                        tint = MaterialTheme.colorScheme.onBackground,
+                                    )
+                                }
+                            }
                             IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_drag_handle),
