@@ -125,8 +125,6 @@ private fun AddItem(list: Lyst) {
     var inEditMode by remember { mutableStateOf(false) }
     if (inEditMode) {
         ItemEditor(
-            textToEdit = "",
-            checkedToEdit = false,
             onDone = { description, checked ->
                 if (description.isNotBlank()) list.addItem(description, checked)
                 inEditMode = false
@@ -150,14 +148,12 @@ private fun AddItem(list: Lyst) {
 
 @Composable
 private fun ItemEditor(
-    textToEdit: String,
-    checkedToEdit: Boolean,
     onDone: (String, Boolean) -> Unit,
     onCancel: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
-    var text by remember { mutableStateOf(textToEdit) }
-    var checked by remember { mutableStateOf(checkedToEdit) }
+    var text by remember { mutableStateOf("") }
+    var checked by remember { mutableStateOf(false) }
 
     Row(modifier = Modifier.focusGroup(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
