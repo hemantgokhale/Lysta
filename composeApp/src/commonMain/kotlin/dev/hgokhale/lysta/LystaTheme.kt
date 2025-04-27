@@ -15,7 +15,7 @@ fun LystaTheme(
     content: @Composable () -> Unit
 ) {
     val lightColors = lightColorScheme(
-        primary = Color(0xFF000000),
+        primary = Color(0xFF5DA3C9),
         secondary = Color(0xFF000000),
         background = Color(0xFFFFFFFF),
         surface = Color(0xFFFFFFFF),
@@ -26,7 +26,7 @@ fun LystaTheme(
     )
 
     val darkColors = darkColorScheme(
-        primary = Color(0xFFFFFFFF),
+        primary = Color(0xFFA5D3EC),
         secondary = Color(0xFFFFFFFF),
         background = Color(0xFF000000),
         surface = Color(0xFF0000000),
