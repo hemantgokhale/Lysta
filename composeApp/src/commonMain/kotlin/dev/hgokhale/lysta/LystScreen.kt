@@ -199,10 +199,11 @@ private fun ItemEditor(
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
-            textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground),
+            textStyle = TextStyle.Default.copy(color = MaterialTheme.colorScheme.onBackground),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
             singleLine = true,
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
             suggestions = listOf("one", "two", "three") // TODO: replace with actual suggestions
         )
         IconButton(onClick = { onDone(text, checked) }) {

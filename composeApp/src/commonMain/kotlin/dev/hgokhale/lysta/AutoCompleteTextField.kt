@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.TextStyle
@@ -31,6 +32,7 @@ fun AutoCompleteTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = false,
+    cursorBrush: Brush,
     suggestions: List<String>,
 ) {
     var popupHeight by remember { mutableStateOf(0) } // in pixels
@@ -71,6 +73,7 @@ fun AutoCompleteTextField(
         textStyle = textStyle,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
-        singleLine = singleLine
+        singleLine = singleLine,
+        cursorBrush = cursorBrush,
     )
 }
