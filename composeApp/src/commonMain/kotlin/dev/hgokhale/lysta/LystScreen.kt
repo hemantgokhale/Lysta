@@ -193,7 +193,7 @@ private fun ItemEditor(
             checked = checked,
             onCheckedChange = { checked = it },
         )
-        BasicTextField(
+        AutoCompleteTextField(
             value = text,
             onValueChange = { text = it },
             modifier = Modifier
@@ -202,7 +202,8 @@ private fun ItemEditor(
             textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
-            singleLine = true
+            singleLine = true,
+            suggestions = listOf("one", "two", "three") // TODO: replace with actual suggestions
         )
         IconButton(onClick = { onDone(text, checked) }) {
             Icon(imageVector = Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.onBackground)
@@ -212,7 +213,7 @@ private fun ItemEditor(
         }
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
-            focusRequester.captureFocus()
+            focusRequester.captureFocus() // TODO: Rethink this interaction.
         }
     }
 }
