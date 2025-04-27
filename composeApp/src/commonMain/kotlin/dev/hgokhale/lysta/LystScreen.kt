@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,8 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -73,8 +72,9 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewM
                 ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
                     val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
                     Surface(shadowElevation = elevation) {
-                        SwipeToDeleteItem(onDelete = { viewModel.deleteItem(list.id, item.id) }) {
-                            LystItem(list = list, item = item, reorderableCollectionItemScope = this)
+                        val onDelete = { viewModel.deleteItem(list.id, item.id) }
+                        SwipeToDeleteItem(onDelete = onDelete) {
+                            LystItem(list = list, item = item, onDelete = onDelete, reorderableCollectionItemScope = this)
                         }
                     }
                 }
@@ -85,16 +85,11 @@ private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewM
 }
 
 @Composable
-private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope: ReorderableCollectionItemScope) {
+private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reorderableCollectionItemScope: ReorderableCollectionItemScope) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
-    val colorScheme = MaterialTheme.colorScheme
-    val textStyle = remember(item.checked) {
-        if (item.checked)
-            TextStyle(color = colorScheme.onBackground, textDecoration = TextDecoration.LineThrough)
-        else
-            TextStyle(color = colorScheme.onBackground)
-    }
+    val listIsSorted by list.sorted.collectAsStateWithLifecycle()
+    val isMobile = remember { getPlatform().isMobile }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
@@ -111,17 +106,28 @@ private fun LystItem(list: Lyst, item: Lyst.Item, reorderableCollectionItemScope
                         list.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
-            textStyle = textStyle,
+            textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground, textDecoration = if (item.checked) TextDecoration.LineThrough else null),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true
         )
-        IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_drag_handle),
-                contentDescription = "Move item",
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
+        if (!isMobile) {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Delete item",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+        }
+        if (!listIsSorted) {
+            IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_drag_handle),
+                    contentDescription = "Move item",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            }
         }
     }
 }
@@ -131,8 +137,6 @@ private fun AddItem(list: Lyst) {
     var inEditMode by remember { mutableStateOf(false) }
     if (inEditMode) {
         ItemEditor(
-            textToEdit = "",
-            checkedToEdit = false,
             onDone = { description, checked ->
                 if (description.isNotBlank()) list.addItem(description, checked)
                 inEditMode = false
@@ -147,7 +151,7 @@ private fun AddItem(list: Lyst) {
             // We don't really need an IconButton here since the entire row is clickable, but using it makes this item align with all other items.
             // This is because Compose automatically adds padding around a tappable target so that it has a minimum recommended touch target size.
             IconButton(onClick = { inEditMode = true }) {
-                Icon(painter = rememberVectorPainter(image = Icons.Filled.Add), contentDescription = "Add item", tint = Color.Black)
+                Icon(imageVector = Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onBackground)
             }
             Text("Add item", color = MaterialTheme.colorScheme.onBackground)
         }
@@ -156,14 +160,12 @@ private fun AddItem(list: Lyst) {
 
 @Composable
 private fun ItemEditor(
-    textToEdit: String,
-    checkedToEdit: Boolean,
     onDone: (String, Boolean) -> Unit,
     onCancel: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
-    var text by remember { mutableStateOf(textToEdit) }
-    var checked by remember { mutableStateOf(checkedToEdit) }
+    var text by remember { mutableStateOf("") }
+    var checked by remember { mutableStateOf(false) }
 
     Row(modifier = Modifier.focusGroup(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
@@ -182,10 +184,10 @@ private fun ItemEditor(
             singleLine = true
         )
         IconButton(onClick = { onDone(text, checked) }) {
-            Icon(painter = rememberVectorPainter(image = Icons.Default.Check), contentDescription = "Done", tint = Color.Black)
+            Icon(imageVector = Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.onBackground)
         }
         IconButton(onClick = onCancel) {
-            Icon(painter = rememberVectorPainter(image = Icons.Default.Clear), contentDescription = "Cancel", tint = Color.Black)
+            Icon(imageVector = Icons.Default.Clear, contentDescription = "Cancel", tint = MaterialTheme.colorScheme.onBackground)
         }
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
