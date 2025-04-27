@@ -1,6 +1,7 @@
 package dev.hgokhale.lysta
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -91,10 +94,24 @@ private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reordera
     val listIsSorted by list.sorted.collectAsStateWithLifecycle()
     val isMobile = remember { getPlatform().isMobile }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
         Checkbox(
             checked = item.checked,
             onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },
+            colors = CheckboxColors(
+                checkedCheckmarkColor = MaterialTheme.colorScheme.onSecondary,
+                uncheckedCheckmarkColor = MaterialTheme.colorScheme.onSecondary,
+                checkedBoxColor = MaterialTheme.colorScheme.background,
+                uncheckedBoxColor = MaterialTheme.colorScheme.background,
+                disabledCheckedBoxColor = MaterialTheme.colorScheme.onSecondary,
+                disabledUncheckedBoxColor = MaterialTheme.colorScheme.onSecondary,
+                disabledIndeterminateBoxColor = MaterialTheme.colorScheme.onSecondary,
+                checkedBorderColor = MaterialTheme.colorScheme.onSecondary,
+                uncheckedBorderColor = MaterialTheme.colorScheme.onSecondary,
+                disabledBorderColor = MaterialTheme.colorScheme.onSecondary,
+                disabledUncheckedBorderColor = MaterialTheme.colorScheme.onSecondary,
+                disabledIndeterminateBorderColor = MaterialTheme.colorScheme.onSecondary,
+            ),
         )
         BasicTextField(
             value = description,
@@ -106,17 +123,21 @@ private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reordera
                         list.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
-            textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground, textDecoration = if (item.checked) TextDecoration.LineThrough else null),
+            textStyle = TextStyle.Default.copy(
+                color = if (item.checked) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
+                textDecoration = if (item.checked) TextDecoration.LineThrough else null
+            ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            singleLine = true
+            singleLine = true,
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
         )
         if (!isMobile) {
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Delete item",
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = MaterialTheme.colorScheme.onSecondary,
                 )
             }
         }
@@ -125,7 +146,7 @@ private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reordera
                 Icon(
                     painter = painterResource(Res.drawable.ic_drag_handle),
                     contentDescription = "Move item",
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = MaterialTheme.colorScheme.onSecondary,
                 )
             }
         }

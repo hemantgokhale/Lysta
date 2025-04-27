@@ -1,6 +1,7 @@
 package dev.hgokhale.lysta
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,7 +58,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                     val onDelete = { viewModel.deleteList(item.id) }
                     SwipeToDeleteItem(onDelete = onDelete) {
                         Row(
-                            modifier = Modifier.clickable { viewModel.onListClicked(item.id) }.padding(horizontal = 16.dp),
+                            modifier = Modifier.background(MaterialTheme.colorScheme.background).clickable { viewModel.onListClicked(item.id) }.padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(text = item.name.value, modifier = Modifier.weight(1f))
@@ -66,7 +67,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Delete item",
-                                        tint = MaterialTheme.colorScheme.onBackground,
+                                        tint = MaterialTheme.colorScheme.onSecondary,
                                     )
                                 }
                             }
@@ -74,7 +75,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_drag_handle),
                                     contentDescription = "Move item",
-                                    tint = MaterialTheme.colorScheme.onBackground,
+                                    tint = MaterialTheme.colorScheme.onSecondary,
                                 )
                             }
                         }
