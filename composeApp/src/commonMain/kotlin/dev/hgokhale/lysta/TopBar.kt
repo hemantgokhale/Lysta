@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -67,7 +68,7 @@ fun TopBar(viewModel: LystViewModel) {
 
 @Composable
 private fun TopBarTitle(uiState: LystViewModel.UIState) {
-    val textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground, fontSize = MaterialTheme.typography.titleLarge.fontSize)
+    val textStyle = TextStyle.Default.copy(color = MaterialTheme.colorScheme.onBackground, fontSize = MaterialTheme.typography.titleLarge.fontSize)
 
     (uiState as? LystViewModel.UIState.Lyst)
         ?.let { lystState ->
@@ -91,6 +92,7 @@ private fun LystTitle(list: Lyst, textStyle: TextStyle, modifier: Modifier = Mod
         textStyle = textStyle,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        singleLine = true
+        singleLine = true,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
     )
 }
