@@ -47,7 +47,7 @@ fun TopBar(viewModel: LystViewModel) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_check_box),
                             contentDescription = if (showChecked) "Show checked items" else "Hide checked items",
-                            tint = if (showChecked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                            tint = if (showChecked) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSecondary,
                         )
                     }
 
@@ -56,7 +56,7 @@ fun TopBar(viewModel: LystViewModel) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_sort),
                             contentDescription = if (isSorted) "Sorted" else "Not sorted",
-                            tint = if (isSorted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                            tint = if (isSorted) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSecondary,
                         )
                     }
                 }

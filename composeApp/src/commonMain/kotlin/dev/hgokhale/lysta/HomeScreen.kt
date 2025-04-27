@@ -67,7 +67,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Delete item",
-                                        tint = MaterialTheme.colorScheme.onBackground,
+                                        tint = MaterialTheme.colorScheme.onSecondary,
                                     )
                                 }
                             }
@@ -75,7 +75,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_drag_handle),
                                     contentDescription = "Move item",
-                                    tint = MaterialTheme.colorScheme.onBackground,
+                                    tint = MaterialTheme.colorScheme.onSecondary,
                                 )
                             }
                         }

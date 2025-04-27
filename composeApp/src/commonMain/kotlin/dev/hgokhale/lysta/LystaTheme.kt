@@ -15,23 +15,23 @@ fun LystaTheme(
     content: @Composable () -> Unit
 ) {
     val lightColors = lightColorScheme(
-        primary = Color(0xFF6200EE),
-        secondary = Color(0xFF03DAC5),
+        primary = Color(0xFF000000),
+        secondary = Color(0xFF000000),
         background = Color(0xFFFFFFFF),
         surface = Color(0xFFFFFFFF),
         onPrimary = Color.White,
-        onSecondary = Color.Black,
+        onSecondary = Color(0x77000000),
         onBackground = Color.Black,
         onSurface = Color.Black
     )
 
     val darkColors = darkColorScheme(
-        primary = Color(0xFFBB86FC),
-        secondary = Color(0xFF03DAC5),
-        background = Color(0xFF121212),
-        surface = Color(0xFF121212),
+        primary = Color(0xFFFFFFFF),
+        secondary = Color(0xFFFFFFFF),
+        background = Color(0xFF000000),
+        surface = Color(0xFF0000000),
         onPrimary = Color.Black,
-        onSecondary = Color.Black,
+        onSecondary = Color(0x77FFFFFF),
         onBackground = Color.White,
         onSurface = Color.White
     )
