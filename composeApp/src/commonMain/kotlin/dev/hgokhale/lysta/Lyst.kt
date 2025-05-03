@@ -99,6 +99,24 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
         }
     }
 
+    fun getAutocompleteSuggestions(query: String): List<String> =
+        if (query.isEmpty()) {
+            emptyList()
+        } else {
+            _items.value
+                .filter { it.description.startsWith(query, ignoreCase = true) }
+                .map { it.description }
+        }
+
+    fun autocompleteSuggestionSelected(suggestion: String ) {
+        _items.value = _items.value.map { item ->
+            if (item.description == suggestion) {
+                item.copy(checked = false)
+            } else {
+                item
+            }
+        }
+    }
 
     override fun toString(): String = "Lyst: $name"
 }

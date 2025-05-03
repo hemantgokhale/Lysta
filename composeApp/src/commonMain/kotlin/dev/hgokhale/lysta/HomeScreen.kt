@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lysta.composeapp.generated.resources.Res
@@ -49,7 +50,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
         viewModel.moveList(from.index, to.index)
     }
 
-    LazyColumn(modifier = modifier.fillMaxSize(), state = lazyListState) {
+    LazyColumn(modifier = modifier.fillMaxSize().focusProperties { canFocus = false }, state = lazyListState) {
         items(items = lists, key = { item -> item.id }) { item ->
             ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
                 val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
@@ -58,7 +59,10 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                     val onDelete = { viewModel.deleteList(item.id) }
                     SwipeToDeleteItem(onDelete = onDelete) {
                         Row(
-                            modifier = Modifier.background(MaterialTheme.colorScheme.background).clickable { viewModel.onListClicked(item.id) }.padding(horizontal = 16.dp),
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.background)
+                                .clickable { viewModel.onListClicked(item.id) }
+                                .padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(text = item.name.value, modifier = Modifier.weight(1f))

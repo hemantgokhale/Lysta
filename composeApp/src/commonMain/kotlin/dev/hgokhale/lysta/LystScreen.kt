@@ -57,12 +57,12 @@ fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystVie
 
     (uiState as? LystViewModel.UIState.Lyst)
         ?.lyst
-        ?.let { Lyst(list = it, modifier = modifier, viewModel = viewModel) }
+        ?.let { Lyst(viewModel = viewModel, list = it, modifier = modifier) }
         ?: LoadingIndicator(modifier = modifier)
 }
 
 @Composable
-private fun Lyst(list: Lyst, modifier: Modifier = Modifier, viewModel: LystViewModel) {
+private fun Lyst(viewModel: LystViewModel, list: Lyst, modifier: Modifier = Modifier) {
     val itemsToRender by list.itemsToRender.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -158,6 +158,7 @@ private fun AddItem(list: Lyst) {
     var inEditMode by remember { mutableStateOf(false) }
     if (inEditMode) {
         ItemEditor(
+            list = list,
             onDone = { description, checked ->
                 if (description.isNotBlank()) list.addItem(description, checked)
                 inEditMode = false
@@ -181,28 +182,39 @@ private fun AddItem(list: Lyst) {
 
 @Composable
 private fun ItemEditor(
+    list: Lyst,
     onDone: (String, Boolean) -> Unit,
     onCancel: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf("") }
     var checked by remember { mutableStateOf(false) }
+    var autocompleteSuggestions by remember { mutableStateOf(listOf<String>()) }
 
     Row(modifier = Modifier.focusGroup(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
             checked = checked,
             onCheckedChange = { checked = it },
         )
-        BasicTextField(
+        AutoCompleteTextField(
             value = text,
-            onValueChange = { text = it },
+            onValueChange = {
+                text = it
+                autocompleteSuggestions = list.getAutocompleteSuggestions(query = it)
+            },
+            onSuggestionSelected = {
+                list.autocompleteSuggestionSelected(it)
+                onCancel()
+            },
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
-            textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground),
+            textStyle = TextStyle.Default.copy(color = MaterialTheme.colorScheme.onBackground),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
-            singleLine = true
+            singleLine = true,
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
+            suggestions = autocompleteSuggestions
         )
         IconButton(onClick = { onDone(text, checked) }) {
             Icon(imageVector = Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.onBackground)
@@ -212,7 +224,7 @@ private fun ItemEditor(
         }
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
-            focusRequester.captureFocus()
+            focusRequester.captureFocus() // TODO: Rethink this interaction.
         }
     }
 }
