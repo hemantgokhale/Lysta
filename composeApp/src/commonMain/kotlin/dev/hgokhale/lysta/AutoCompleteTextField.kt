@@ -4,9 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,7 +54,10 @@ fun AutoCompleteTextField(
             offset = IntOffset(textFieldOffset.x, textFieldOffset.y - popupHeight - popupToTextFieldOffset),
             properties = androidx.compose.ui.window.PopupProperties(focusable = false)
         ) {
-            Surface(shadowElevation = 4.dp) {
+            Surface(
+                color = MaterialTheme.colorScheme.inverseSurface,
+                shape = RoundedCornerShape(corner = CornerSize(4.dp))
+            ) {
                 Column(
                     modifier = Modifier
                         .onGloballyPositioned { popupHeight = it.size.height }
@@ -66,7 +72,9 @@ fun AutoCompleteTextField(
                                 }
                                 .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp)
                         ) {
-                            Text(text = suggestion, style = textStyle)
+                            Text(text = suggestion,
+                                color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.8f),
+                                style = textStyle)
                         }
                     }
                 }

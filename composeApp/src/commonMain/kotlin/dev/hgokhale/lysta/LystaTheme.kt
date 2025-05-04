@@ -9,6 +9,17 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
+/*
+Surface – A role used for backgrounds and large, low-emphasis areas of the screen.
+Primary, Secondary, Tertiary – Accent color roles used to emphasize or de-emphasize foreground elements.
+Container – Roles used as a fill color for foreground elements like buttons. They should not be used for text or icons.
+
+Primary = important actions and elements needing the most emphasis, like a FAB to start a new message.
+Secondary = elements that don’t need immediate attention and don’t need emphasis, like the selected state of a navigation icon or a dismissive button.
+Tertiary = smaller elements that need special emphasis but don't require immediate attention, such as a badge or notification.
+inverseSurface = used for snackbars, dialogs, and other surfaces that need to be on top of the background.
+*/
+
 @Composable
 fun LystaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -22,7 +33,10 @@ fun LystaTheme(
         onPrimary = Color.White,
         onSecondary = Color(0x77000000),
         onBackground = Color.Black,
-        onSurface = Color.Black
+        onSurface = Color.Black,
+        inverseSurface = Color(0xFFF3F3F3),
+        inverseOnSurface = Color(0xFF000000),
+        inversePrimary = Color(0xFF5DA3C9),
     )
 
     val darkColors = darkColorScheme(
@@ -33,7 +47,10 @@ fun LystaTheme(
         onPrimary = Color.Black,
         onSecondary = Color(0x77FFFFFF),
         onBackground = Color.White,
-        onSurface = Color.White
+        onSurface = Color.White,
+        inverseSurface = Color(0xFF1F1F1F),
+        inverseOnSurface = Color(0xFFFFFFFF),
+        inversePrimary = Color(0xFFA5D3EC),
     )
 
     MaterialTheme(
