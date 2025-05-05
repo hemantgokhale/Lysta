@@ -15,7 +15,7 @@ Primary, Secondary, Tertiary – Accent color roles used to emphasize or de-emph
 Container – Roles used as a fill color for foreground elements like buttons. They should not be used for text or icons.
 
 Primary = important actions and elements needing the most emphasis, like a FAB to start a new message.
-Secondary = elements that don’t need immediate attention and don’t need emphasis, like the selected state of a navigation icon or a dismissive button.
+Secondary = elements that don’t need immediate attention and don’t need emphasis. We use this for most icons like checkboxes and drag bars.
 Tertiary = smaller elements that need special emphasis but don't require immediate attention, such as a badge or notification.
 inverseSurface = used for snackbars, dialogs, and other surfaces that need to be on top of the background.
 */
