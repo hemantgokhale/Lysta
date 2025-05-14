@@ -100,7 +100,7 @@ private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reordera
             onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },
             colors = CheckboxColors(
                 checkedCheckmarkColor = MaterialTheme.colorScheme.onSecondary,
-                uncheckedCheckmarkColor = MaterialTheme.colorScheme.onSecondary,
+                uncheckedCheckmarkColor = MaterialTheme.colorScheme.background,
                 checkedBoxColor = MaterialTheme.colorScheme.background,
                 uncheckedBoxColor = MaterialTheme.colorScheme.background,
                 disabledCheckedBoxColor = MaterialTheme.colorScheme.onSecondary,
