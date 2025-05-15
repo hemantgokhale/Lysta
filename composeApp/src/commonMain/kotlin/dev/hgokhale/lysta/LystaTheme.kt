@@ -1,6 +1,7 @@
 package dev.hgokhale.lysta
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
@@ -8,6 +9,26 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import lysta.composeapp.generated.resources.Res
+import lysta.composeapp.generated.resources.inter
+import lysta.composeapp.generated.resources.inter_italic
+import org.jetbrains.compose.resources.Font
+
+@Composable
+fun LystaTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val (lightColors, darkColors) = lystaColorSchemes()
+    MaterialTheme(
+        colorScheme = if (darkTheme) darkColors else lightColors,
+        typography = lystaTypography(),
+        shapes = Shapes(),
+        content = content
+    )
+}
 
 /*
 Surface – A role used for backgrounds and large, low-emphasis areas of the screen.
@@ -19,12 +40,7 @@ Secondary = elements that don’t need immediate attention and don’t need emph
 Tertiary = smaller elements that need special emphasis but don't require immediate attention, such as a badge or notification.
 inverseSurface = used for snackbars, dialogs, and other surfaces that need to be on top of the background.
 */
-
-@Composable
-fun LystaTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
+private fun lystaColorSchemes(): Pair<ColorScheme, ColorScheme> {
     val lightColors = lightColorScheme(
         primary = Color(0xFF5DA3C9),
         secondary = Color(0xFF000000),
@@ -52,12 +68,34 @@ fun LystaTheme(
         inverseOnSurface = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFFA5D3EC),
     )
+    return Pair(lightColors, darkColors)
+}
 
-    MaterialTheme(
-        colorScheme = if (darkTheme) darkColors else lightColors,
-        typography = Typography(),
-        shapes = Shapes(),
-        content = content
+@Composable
+private fun lystaTypography(): Typography {
+    val lystaFontFamily = FontFamily(
+        Font(resource = Res.font.inter, style = FontStyle.Normal),
+        Font(resource = Res.font.inter_italic, style = FontStyle.Italic)
     )
+
+    val defaultTypography = Typography()
+    val lystaTypography = Typography(
+        displayLarge = defaultTypography.displayLarge.copy(fontFamily = lystaFontFamily),
+        displayMedium = defaultTypography.displayMedium.copy(fontFamily = lystaFontFamily),
+        displaySmall = defaultTypography.displaySmall.copy(fontFamily = lystaFontFamily),
+        headlineLarge = defaultTypography.headlineLarge.copy(fontFamily = lystaFontFamily),
+        headlineMedium = defaultTypography.headlineMedium.copy(fontFamily = lystaFontFamily),
+        headlineSmall = defaultTypography.headlineSmall.copy(fontFamily = lystaFontFamily),
+        titleLarge = defaultTypography.titleLarge.copy(fontFamily = lystaFontFamily),
+        titleMedium = defaultTypography.titleMedium.copy(fontFamily = lystaFontFamily),
+        titleSmall = defaultTypography.titleSmall.copy(fontFamily = lystaFontFamily),
+        bodyLarge = defaultTypography.bodyLarge.copy(fontFamily = lystaFontFamily),
+        bodyMedium = defaultTypography.bodyMedium.copy(fontFamily = lystaFontFamily),
+        bodySmall = defaultTypography.bodySmall.copy(fontFamily = lystaFontFamily),
+        labelLarge = defaultTypography.labelLarge.copy(fontFamily = lystaFontFamily),
+        labelMedium = defaultTypography.labelMedium.copy(fontFamily = lystaFontFamily),
+        labelSmall = defaultTypography.labelSmall.copy(fontFamily = lystaFontFamily),
+    )
+    return lystaTypography
 }
 
