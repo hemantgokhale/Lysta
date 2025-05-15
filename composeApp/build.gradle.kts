@@ -63,6 +63,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.compose.navigation)
+            implementation(libs.material.icons.core)
             implementation(libs.reorderable)
             implementation(projects.shared)
         }
