@@ -97,7 +97,7 @@ class LystViewModel : ViewModel() {
                 deletedList = Pair(index, listToDelete)
                 _snackbarEvents.send(
                     SnackbarEvent(
-                        message = "\"${listToDelete.name.value}\" deleted",
+                        message = "Deleted: ${listToDelete.name.value}",
                         actionLabel = "Undo",
                         action = { undeleteList() }
                     )
@@ -123,7 +123,7 @@ class LystViewModel : ViewModel() {
                         ?.let { item ->
                             _snackbarEvents.send(
                                 SnackbarEvent(
-                                    message = "\"${item.description}\" deleted",
+                                    message = "Deleted: ${item.description}",
                                     actionLabel = "Undo",
                                     action = { lyst.undeleteItem() }
                                 )
