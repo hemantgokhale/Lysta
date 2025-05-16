@@ -1,9 +1,6 @@
 package dev.hgokhale.lysta
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Column
@@ -43,8 +40,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_drag_handle
 import org.jetbrains.compose.resources.painterResource
@@ -79,7 +74,9 @@ private fun Lyst(viewModel: LystViewModel, list: Lyst, modifier: Modifier = Modi
                     Surface(shadowElevation = elevation) {
                         val onDelete = { viewModel.deleteItem(list.id, item.id) }
                         SwipeToDeleteItem(onDelete = onDelete) {
-                            LystItem(list = list, item = item, onDelete = onDelete, reorderableCollectionItemScope = this)
+                            HighlightableItem(showHighlight = item.showHighlight) { modifier ->
+                                LystItem(list = list, item = item, onDelete = onDelete, reorderableCollectionItemScope = this, modifier = modifier)
+                            }
                         }
                     }
                 }
@@ -90,26 +87,19 @@ private fun Lyst(viewModel: LystViewModel, list: Lyst, modifier: Modifier = Modi
 }
 
 @Composable
-private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reorderableCollectionItemScope: ReorderableCollectionItemScope) {
+private fun LystItem(
+    list: Lyst,
+    item: Lyst.Item,
+    onDelete: () -> Unit,
+    reorderableCollectionItemScope: ReorderableCollectionItemScope,
+    modifier: Modifier = Modifier
+) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
     val listIsSorted by list.sorted.collectAsStateWithLifecycle()
     val isMobile = remember { getPlatform().isMobile }
-    var showAnimation by remember { mutableStateOf(item.showAnimation) }
-    val backgroundColor by animateColorAsState(
-        targetValue = if (showAnimation) MaterialTheme.colorScheme.inverseSurface else MaterialTheme.colorScheme.background,
-        animationSpec = tween(durationMillis = 200)
-    )
 
-    LaunchedEffect(item.id) {
-        launch {
-            delay(500)
-            item.showAnimation = false
-            showAnimation = false
-        }
-    }
-
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(backgroundColor)) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
         Checkbox(
             checked = item.checked,
             onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },

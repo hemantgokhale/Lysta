@@ -109,7 +109,7 @@ class LystViewModel : ViewModel() {
     private fun undeleteList() {
         deletedList
             ?.let { (index, list) ->
-                _lists.value = _lists.value.toMutableList().also { it.add(index, list) }
+                _lists.value = _lists.value.toMutableList().also { it.add(index, list.apply { showHighlight = true }) }
                 deletedList = null
             }
     }
