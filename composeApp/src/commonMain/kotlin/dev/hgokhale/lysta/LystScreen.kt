@@ -95,17 +95,17 @@ private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reordera
     var description by remember { mutableStateOf(item.description) }
     val listIsSorted by list.sorted.collectAsStateWithLifecycle()
     val isMobile = remember { getPlatform().isMobile }
-    var isNew by remember { mutableStateOf(item.isNew) }
+    var showAnimation by remember { mutableStateOf(item.showAnimation) }
     val backgroundColor by animateColorAsState(
-        targetValue = if (isNew) MaterialTheme.colorScheme.inverseSurface else MaterialTheme.colorScheme.background,
+        targetValue = if (showAnimation) MaterialTheme.colorScheme.inverseSurface else MaterialTheme.colorScheme.background,
         animationSpec = tween(durationMillis = 200)
     )
 
     LaunchedEffect(item.id) {
         launch {
             delay(500)
-            item.isNew = false
-            isNew = false
+            item.showAnimation = false
+            showAnimation = false
         }
     }
 

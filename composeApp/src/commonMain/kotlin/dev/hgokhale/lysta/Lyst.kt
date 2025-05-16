@@ -14,7 +14,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
     data class Item(
         val description: String,
         val checked: Boolean,
-        var isNew: Boolean = false, // Used to show a momentary highlight behind a new item.
+        var showAnimation: Boolean = false, // Used to show a momentary highlight behind a new or restored item.
     ) {
         val id: String = Uuid.random().toString()
     }
@@ -53,7 +53,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
     }
 
     fun addItem(description: String = "", checked: Boolean = false) {
-        _items.value += Item(description, checked, isNew = true)
+        _items.value += Item(description, checked, showAnimation = true)
     }
 
     fun deleteItem(itemId: String): Item? {
@@ -70,7 +70,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
 
     fun undeleteItem() {
         deletedItem?.let { (index, item) ->
-            _items.value = _items.value.toMutableList().apply { add(index, item) }
+            _items.value = _items.value.toMutableList().apply { add(index, item.apply { showAnimation = true}) }
             deletedItem = null
         }
     }
