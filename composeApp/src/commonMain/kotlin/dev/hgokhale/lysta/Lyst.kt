@@ -11,7 +11,11 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope) {
-    data class Item(val description: String, val checked: Boolean) {
+    data class Item(
+        val description: String,
+        val checked: Boolean,
+        var isNew: Boolean = false, // Used to show a momentary highlight behind a new item.
+    ) {
         val id: String = Uuid.random().toString()
     }
 
@@ -49,7 +53,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
     }
 
     fun addItem(description: String = "", checked: Boolean = false) {
-        _items.value += Item(description, checked)
+        _items.value += Item(description, checked, isNew = true)
     }
 
     fun deleteItem(itemId: String): Item? {
@@ -108,7 +112,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
                 .map { it.description }
         }
 
-    fun autocompleteSuggestionSelected(suggestion: String ) {
+    fun autocompleteSuggestionSelected(suggestion: String) {
         _items.value = _items.value.map { item ->
             if (item.description == suggestion) {
                 item.copy(checked = false)

@@ -1,6 +1,8 @@
 package dev.hgokhale.lysta
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
@@ -42,6 +44,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_drag_handle
 import org.jetbrains.compose.resources.painterResource
@@ -92,8 +96,21 @@ private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reordera
     var description by remember { mutableStateOf(item.description) }
     val listIsSorted by list.sorted.collectAsStateWithLifecycle()
     val isMobile = remember { getPlatform().isMobile }
+    var isNew by remember { mutableStateOf(item.isNew) }
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isNew) MaterialTheme.colorScheme.inverseSurface else MaterialTheme.colorScheme.background,
+        animationSpec = tween(durationMillis = 200)
+    )
 
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
+    LaunchedEffect(item.id) {
+        launch {
+            delay(500)
+            item.isNew = false
+            isNew = false
+        }
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(backgroundColor)) {
         Checkbox(
             checked = item.checked,
             onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },
