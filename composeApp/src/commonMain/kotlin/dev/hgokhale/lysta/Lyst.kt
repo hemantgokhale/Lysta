@@ -11,7 +11,11 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope) {
-    data class Item(val description: String, val checked: Boolean) {
+    data class Item(
+        val description: String,
+        val checked: Boolean,
+        var showHighlight: Boolean = false, // Used to show a momentary highlight behind a new or restored item.
+    ) {
         val id: String = Uuid.random().toString()
     }
 
@@ -35,6 +39,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private var deletedItem: Pair<Int, Item>? = null // first = index, second = item
+    var showHighlight = false // Used to show a momentary highlight when the list is undeleted
 
     fun onShowCheckedClicked() {
         _showChecked.value = !showChecked.value
@@ -49,7 +54,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
     }
 
     fun addItem(description: String = "", checked: Boolean = false) {
-        _items.value += Item(description, checked)
+        _items.value += Item(description, checked, showHighlight = true)
     }
 
     fun deleteItem(itemId: String): Item? {
@@ -66,7 +71,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
 
     fun undeleteItem() {
         deletedItem?.let { (index, item) ->
-            _items.value = _items.value.toMutableList().apply { add(index, item) }
+            _items.value = _items.value.toMutableList().apply { add(index, item.apply { showHighlight = true}) }
             deletedItem = null
         }
     }
@@ -108,7 +113,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
                 .map { it.description }
         }
 
-    fun autocompleteSuggestionSelected(suggestion: String ) {
+    fun autocompleteSuggestionSelected(suggestion: String) {
         _items.value = _items.value.map { item ->
             if (item.description == suggestion) {
                 item.copy(checked = false)

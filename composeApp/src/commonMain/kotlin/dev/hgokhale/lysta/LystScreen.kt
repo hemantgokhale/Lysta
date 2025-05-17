@@ -1,7 +1,6 @@
 package dev.hgokhale.lysta
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Column
@@ -38,9 +37,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lysta.composeapp.generated.resources.Res
@@ -77,7 +74,9 @@ private fun Lyst(viewModel: LystViewModel, list: Lyst, modifier: Modifier = Modi
                     Surface(shadowElevation = elevation) {
                         val onDelete = { viewModel.deleteItem(list.id, item.id) }
                         SwipeToDeleteItem(onDelete = onDelete) {
-                            LystItem(list = list, item = item, onDelete = onDelete, reorderableCollectionItemScope = this)
+                            HighlightableItem(showHighlight = item.showHighlight) { modifier ->
+                                LystItem(list = list, item = item, onDelete = onDelete, reorderableCollectionItemScope = this, modifier = modifier)
+                            }
                         }
                     }
                 }
@@ -88,13 +87,19 @@ private fun Lyst(viewModel: LystViewModel, list: Lyst, modifier: Modifier = Modi
 }
 
 @Composable
-private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reorderableCollectionItemScope: ReorderableCollectionItemScope) {
+private fun LystItem(
+    list: Lyst,
+    item: Lyst.Item,
+    onDelete: () -> Unit,
+    reorderableCollectionItemScope: ReorderableCollectionItemScope,
+    modifier: Modifier = Modifier
+) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
     val listIsSorted by list.sorted.collectAsStateWithLifecycle()
     val isMobile = remember { getPlatform().isMobile }
 
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
         Checkbox(
             checked = item.checked,
             onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },
@@ -123,9 +128,8 @@ private fun LystItem(list: Lyst, item: Lyst.Item, onDelete: () -> Unit, reordera
                         list.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
-            textStyle = TextStyle.Default.copy(
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
                 color = if (item.checked) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
-                textDecoration = if (item.checked) TextDecoration.LineThrough else null
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
@@ -175,7 +179,7 @@ private fun AddItem(list: Lyst) {
             IconButton(onClick = { inEditMode = true }) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onBackground)
             }
-            Text("Add item", color = MaterialTheme.colorScheme.onBackground)
+            Text("Add item", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -209,7 +213,7 @@ private fun ItemEditor(
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
-            textStyle = TextStyle.Default.copy(color = MaterialTheme.colorScheme.onBackground),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onBackground),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
             singleLine = true,

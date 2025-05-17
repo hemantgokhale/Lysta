@@ -1,7 +1,6 @@
 package dev.hgokhale.lysta
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_drag_handle
 import org.jetbrains.compose.resources.painterResource
+import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -43,7 +43,6 @@ fun HomeScreen(modifier: Modifier = Modifier, viewModel: LystViewModel) {
 
 @Composable
 private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
-    val isMobile = remember { getPlatform().isMobile }
     val lists by viewModel.lists.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -58,34 +57,48 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                 Surface(shadowElevation = elevation) {
                     val onDelete = { viewModel.deleteList(item.id) }
                     SwipeToDeleteItem(onDelete = onDelete) {
-                        Row(
-                            modifier = Modifier
-                                .background(MaterialTheme.colorScheme.background)
-                                .clickable { viewModel.onListClicked(item.id) }
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = item.name.value, modifier = Modifier.weight(1f))
-                            if (!isMobile) {
-                                IconButton(onClick = onDelete) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Delete item",
-                                        tint = MaterialTheme.colorScheme.onSecondary,
-                                    )
-                                }
-                            }
-                            IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
-                                Icon(
-                                    painter = painterResource(Res.drawable.ic_drag_handle),
-                                    contentDescription = "Move item",
-                                    tint = MaterialTheme.colorScheme.onSecondary,
-                                )
-                            }
+                        HighlightableItem(showHighlight = item.showHighlight) { modifier ->
+                            HomeItem(viewModel, item, onDelete, reorderableCollectionItemScope, modifier)
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun HomeItem(
+    viewModel: LystViewModel,
+    item: Lyst,
+    onDelete: () -> Unit,
+    reorderableCollectionItemScope: ReorderableCollectionItemScope,
+    modifier: Modifier = Modifier,
+) {
+    val isMobile = remember { getPlatform().isMobile }
+
+    Row(
+        modifier = modifier
+            .clickable { viewModel.onListClicked(item.id) }
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = item.name.value, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        if (!isMobile) {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Delete item",
+                    tint = MaterialTheme.colorScheme.onSecondary,
+                )
+            }
+        }
+        IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_drag_handle),
+                contentDescription = "Move item",
+                tint = MaterialTheme.colorScheme.onSecondary,
+            )
         }
     }
 }

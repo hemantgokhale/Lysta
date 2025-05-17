@@ -68,7 +68,7 @@ fun App(viewModel: LystViewModel = viewModel { LystViewModel() }) {
             Scaffold(
                 modifier = Modifier.widthIn(max = 450.dp),
                 topBar = { TopBar(viewModel = viewModel) },
-                snackbarHost = { SnackbarHost(snackbarHostState) },
+                snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { LystaSnackbar(it) }) },
                 floatingActionButton = { if (uiState.showFAB) DraggableFAB { viewModel.onFabClicked() } },
             ) { paddingValues ->
                 NavGraph(paddingValues, navController, viewModel)

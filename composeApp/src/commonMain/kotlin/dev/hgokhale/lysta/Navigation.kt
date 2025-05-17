@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.savedstate.read
 
 @Composable
 fun NavGraph(
@@ -22,7 +23,7 @@ fun NavGraph(
     ) {
         composable(NavigationDestination.Home.route) { HomeScreen(viewModel = viewModel) }
         composable(NavigationDestination.Lyst.route) { backStackEntry ->
-            backStackEntry.arguments?.getString("listId")?.let {
+            backStackEntry.arguments?.read { getStringOrNull("listId") }?.let {
                 LystScreen(listId = it, viewModel = viewModel)
             }
         }
