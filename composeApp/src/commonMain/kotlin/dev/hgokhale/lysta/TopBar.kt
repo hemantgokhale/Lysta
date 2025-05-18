@@ -68,7 +68,7 @@ fun TopBar(viewModel: LystViewModel) {
 
 @Composable
 private fun TopBarTitle(uiState: LystViewModel.UIState) {
-    val textStyle = MaterialTheme.typography.titleLarge.copy(color = MaterialTheme.colorScheme.onBackground)
+    val textStyle = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onBackground)
 
     (uiState as? LystViewModel.UIState.Lyst)
         ?.let { lystState ->

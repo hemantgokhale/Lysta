@@ -128,7 +128,7 @@ private fun LystItem(
                         list.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
-            textStyle = MaterialTheme.typography.bodyMedium.copy(
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = if (item.checked) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -179,7 +179,7 @@ private fun AddItem(list: Lyst) {
             IconButton(onClick = { inEditMode = true }) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onBackground)
             }
-            Text("Add item", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.bodyMedium)
+            Text("Add item", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
@@ -213,7 +213,7 @@ private fun ItemEditor(
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onBackground),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
             singleLine = true,

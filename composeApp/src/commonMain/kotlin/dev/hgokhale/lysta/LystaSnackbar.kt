@@ -36,13 +36,13 @@ fun LystaSnackbar(data: SnackbarData) {
                 color = MaterialTheme.colorScheme.inverseOnSurface,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
             )
 
             data.visuals.actionLabel?.let { actionLabel ->
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = { data.performAction() }) {
-                    Text(text = actionLabel, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
+                    Text(text = actionLabel, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyLarge)
                 }
             }
 
