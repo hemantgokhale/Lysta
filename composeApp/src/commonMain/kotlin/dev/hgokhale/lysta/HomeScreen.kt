@@ -83,7 +83,7 @@ private fun HomeItem(
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = item.name.value, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        Text(text = item.name.value, modifier = Modifier.weight(1f))
         if (!isMobile) {
             IconButton(onClick = onDelete) {
                 Icon(

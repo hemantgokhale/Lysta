@@ -1,5 +1,6 @@
 package dev.hgokhale.lysta
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +15,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,14 +36,15 @@ fun LystaSnackbar(data: SnackbarData) {
                 color = MaterialTheme.colorScheme.inverseOnSurface,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
-                style = MaterialTheme.typography.bodyLarge,
             )
 
             data.visuals.actionLabel?.let { actionLabel ->
                 Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = { data.performAction() }) {
-                    Text(text = actionLabel, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyLarge)
-                }
+                Text(
+                    text = actionLabel,
+                    modifier = Modifier.clickable { data.performAction() },
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
 
             if (data.visuals.withDismissAction) {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -11,6 +12,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -65,13 +67,15 @@ fun App(viewModel: LystViewModel = viewModel { LystViewModel() }) {
             modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.inverseSurface),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Scaffold(
-                modifier = Modifier.widthIn(max = 640.dp),
-                topBar = { TopBar(viewModel = viewModel) },
-                snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { LystaSnackbar(it) }) },
-                floatingActionButton = { if (uiState.showFAB) DraggableFAB { viewModel.onFabClicked() } },
-            ) { paddingValues ->
-                NavGraph(paddingValues, navController, viewModel)
+            CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyLarge) {
+                Scaffold(
+                    modifier = Modifier.widthIn(max = 640.dp),
+                    topBar = { TopBar(viewModel = viewModel) },
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { LystaSnackbar(it) }) },
+                    floatingActionButton = { if (uiState.showFAB) DraggableFAB { viewModel.onFabClicked() } },
+                ) { paddingValues ->
+                    NavGraph(paddingValues, navController, viewModel)
+                }
             }
         }
     }
