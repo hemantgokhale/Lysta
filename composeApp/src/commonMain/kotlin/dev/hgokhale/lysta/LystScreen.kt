@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
@@ -30,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +43,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_drag_handle
 import org.jetbrains.compose.resources.painterResource
@@ -83,7 +86,7 @@ private fun Lyst(viewModel: LystViewModel, list: Lyst, modifier: Modifier = Modi
                 }
             }
         }
-        AddItem(list)
+        AddItem(list, lazyListState)
     }
 }
 
@@ -159,13 +162,20 @@ private fun LystItem(
 }
 
 @Composable
-private fun AddItem(list: Lyst) {
+private fun AddItem(list: Lyst, listState: LazyListState) {
     var inEditMode by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     if (inEditMode) {
         ItemEditor(
             list = list,
             onDone = { description, checked ->
-                if (description.isNotBlank()) list.addItem(description, checked)
+                if (description.isNotBlank()) {
+                    val item = list.addItem(description, checked)
+                    coroutineScope.launch {
+                        val index = list.itemsToRender.value.indexOf(item)
+                        if (index != -1) listState.animateScrollToItem(index)
+                    }
+                }
                 inEditMode = false
             },
             onCancel = { inEditMode = false }

@@ -53,8 +53,10 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
         _name.value = name
     }
 
-    fun addItem(description: String = "", checked: Boolean = false) {
-        _items.value += Item(description, checked, showHighlight = true)
+    fun addItem(description: String = "", checked: Boolean = false) : Item {
+        val item = Item(description, checked, showHighlight = true)
+        _items.value += item
+        return item
     }
 
     fun deleteItem(itemId: String): Item? {
