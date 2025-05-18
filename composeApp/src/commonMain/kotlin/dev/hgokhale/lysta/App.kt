@@ -62,11 +62,11 @@ fun App(viewModel: LystViewModel = viewModel { LystViewModel() }) {
 
     LystaTheme {
         Column( // We add this colum to center the app content on a large screen e.g. desktop or web
-            modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background),
+            modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.inverseSurface),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Scaffold(
-                modifier = Modifier.widthIn(max = 450.dp),
+                modifier = Modifier.widthIn(max = 640.dp),
                 topBar = { TopBar(viewModel = viewModel) },
                 snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { LystaSnackbar(it) }) },
                 floatingActionButton = { if (uiState.showFAB) DraggableFAB { viewModel.onFabClicked() } },
