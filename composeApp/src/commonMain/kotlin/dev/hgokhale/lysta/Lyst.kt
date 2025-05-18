@@ -10,12 +10,12 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
-class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope) {
+class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope) : Highlightable {
     data class Item(
         val description: String,
         val checked: Boolean,
-        var showHighlight: Boolean = false, // Used to show a momentary highlight behind a new or restored item.
-    ) {
+        override var showHighlight: Boolean = false,
+    ) : Highlightable {
         val id: String = Uuid.random().toString()
     }
 
@@ -39,7 +39,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private var deletedItem: Pair<Int, Item>? = null // first = index, second = item
-    var showHighlight = false // Used to show a momentary highlight when the list is undeleted
+    override var showHighlight = false
 
     fun onShowCheckedClicked() {
         _showChecked.value = !showChecked.value
@@ -71,7 +71,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
 
     fun undeleteItem() {
         deletedItem?.let { (index, item) ->
-            _items.value = _items.value.toMutableList().apply { add(index, item.apply { showHighlight = true}) }
+            _items.value = _items.value.toMutableList().apply { add(index, item.apply { showHighlight = true }) }
             deletedItem = null
         }
     }

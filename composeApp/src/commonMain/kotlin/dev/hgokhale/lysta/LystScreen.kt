@@ -74,7 +74,7 @@ private fun Lyst(viewModel: LystViewModel, list: Lyst, modifier: Modifier = Modi
                     Surface(shadowElevation = elevation) {
                         val onDelete = { viewModel.deleteItem(list.id, item.id) }
                         SwipeToDeleteItem(onDelete = onDelete) {
-                            HighlightableItem(showHighlight = item.showHighlight) { modifier ->
+                            Highlightable(item) { modifier ->
                                 LystItem(list = list, item = item, onDelete = onDelete, reorderableCollectionItemScope = this, modifier = modifier)
                             }
                         }

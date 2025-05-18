@@ -57,7 +57,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                 Surface(shadowElevation = elevation) {
                     val onDelete = { viewModel.deleteList(item.id) }
                     SwipeToDeleteItem(onDelete = onDelete) {
-                        HighlightableItem(showHighlight = item.showHighlight) { modifier ->
+                        Highlightable(item) { modifier ->
                             HomeItem(viewModel, item, onDelete, reorderableCollectionItemScope, modifier)
                         }
                     }
