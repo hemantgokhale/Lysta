@@ -18,10 +18,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lysta.composeapp.generated.resources.Res
@@ -76,15 +80,28 @@ private fun HomeItem(
     modifier: Modifier = Modifier,
 ) {
     val isMobile = remember { getPlatform().isMobile }
+    var isHovered by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier
             .clickable { viewModel.onListClicked(item.id) }
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        when (event.type) {
+                            PointerEventType.Enter -> isHovered = true
+                            PointerEventType.Exit -> isHovered = false
+                            else -> Unit
+                        }
+                    }
+                }
+            }
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = item.name.value, modifier = Modifier.weight(1f))
-        if (!isMobile) {
+        if (!isMobile && isHovered) {
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Close,
