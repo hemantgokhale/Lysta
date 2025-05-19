@@ -57,7 +57,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
                 Surface(shadowElevation = elevation) {
                     val onDelete = { viewModel.deleteList(item.id) }
                     SwipeToDeleteItem(onDelete = onDelete) {
-                        HighlightableItem(showHighlight = item.showHighlight) { modifier ->
+                        Highlightable(item) { modifier ->
                             HomeItem(viewModel, item, onDelete, reorderableCollectionItemScope, modifier)
                         }
                     }
@@ -83,7 +83,7 @@ private fun HomeItem(
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = item.name.value, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        Text(text = item.name.value, modifier = Modifier.weight(1f))
         if (!isMobile) {
             IconButton(onClick = onDelete) {
                 Icon(
