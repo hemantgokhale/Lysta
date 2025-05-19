@@ -67,9 +67,11 @@ fun App(viewModel: LystViewModel = viewModel { LystViewModel() }) {
             modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.inverseSurface),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyLarge) {
+            val primaryTextStyle = MaterialTheme.typography.bodyLarge
+            val maxWidth = primaryTextStyle.fontSize.value.dp * 40 // enough space to fit ~80 chars
+            CompositionLocalProvider(LocalTextStyle provides primaryTextStyle) {
                 Scaffold(
-                    modifier = Modifier.widthIn(max = 640.dp),
+                    modifier = Modifier.widthIn(max = maxWidth),
                     topBar = { TopBar(viewModel = viewModel) },
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { LystaSnackbar(it) }) },
                     floatingActionButton = { if (uiState.showFAB) DraggableFAB { viewModel.onFabClicked() } },
