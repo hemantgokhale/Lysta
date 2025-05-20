@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -45,6 +47,9 @@ class LystViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<UIState>(UIState.Home())
     val uiState = _uiState.asStateFlow()
 
+    private val _newItem = MutableSharedFlow<Int>() // index of a newly added item
+    val newItem: SharedFlow<Int> get() = _newItem
+
     private var deletedList: Pair<Int, Lyst>? = null // first = index, second = list
 
     fun moveList(from: Int, to: Int) {
@@ -58,6 +63,7 @@ class LystViewModel : ViewModel() {
     private fun createList(): String {
         val list = Lyst(name = "New list", listOf(), viewModelScope)
         _lists.value += list
+        publishNewItemNotification(list)
         return list.id
     }
 
@@ -111,6 +117,7 @@ class LystViewModel : ViewModel() {
             ?.let { (index, list) ->
                 _lists.value = _lists.value.toMutableList().also { it.add(index, list.apply { showHighlight = true }) }
                 deletedList = null
+                publishNewItemNotification(list)
             }
     }
 
@@ -147,6 +154,13 @@ class LystViewModel : ViewModel() {
             ?.let { lyst: Lyst ->
                 lyst.onShowCheckedClicked()
             }
+    }
+
+    private fun publishNewItemNotification(list: Lyst) {
+        viewModelScope.launch {
+            val index = lists.value.indexOf(list)
+            if (index != -1) _newItem.emit(index)
+        }
     }
 
     private fun sampleLists(): List<Lyst> = listOf(

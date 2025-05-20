@@ -53,6 +53,8 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
         viewModel.moveList(from.index, to.index)
     }
 
+    ScrollToNewItemEffect(viewModel.newItem, lazyListState)
+
     LazyColumn(modifier = modifier.fillMaxSize().focusProperties { canFocus = false }, state = lazyListState) {
         items(items = lists, key = { item -> item.id }) { item ->
             ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->

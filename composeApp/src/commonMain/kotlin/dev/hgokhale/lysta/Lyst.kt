@@ -1,16 +1,19 @@
 package dev.hgokhale.lysta
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
-class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope) : Highlightable {
+class Lyst(name: String, itemsValue: List<Item>, val viewModelScope: CoroutineScope) : Highlightable {
     data class Item(
         val description: String,
         val checked: Boolean,
@@ -30,6 +33,9 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
 
     private val _showChecked = MutableStateFlow(true)
     val showChecked = _showChecked.asStateFlow()
+
+    private val _newItem = MutableSharedFlow<Int>() // index of a newly added item
+    val newItem: SharedFlow<Int> get() = _newItem
 
     val itemsToRender = combine(_items, _sorted, _showChecked) { items, sorted, showChecked ->
         items
@@ -56,7 +62,15 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
     fun addItem(description: String = "", checked: Boolean = false) : Item {
         val item = Item(description, checked, showHighlight = true)
         _items.value += item
+        publishNewItemNotification(item)
         return item
+    }
+
+    private fun publishNewItemNotification(item: Item) {
+        viewModelScope.launch {
+            val index = itemsToRender.value.indexOf(item)
+            if (index != -1) _newItem.emit(index)
+        }
     }
 
     fun deleteItem(itemId: String): Item? {
@@ -74,6 +88,7 @@ class Lyst(name: String, itemsValue: List<Item>, viewModelScope: CoroutineScope)
     fun undeleteItem() {
         deletedItem?.let { (index, item) ->
             _items.value = _items.value.toMutableList().apply { add(index, item.apply { showHighlight = true }) }
+            publishNewItemNotification(item)
             deletedItem = null
         }
     }
