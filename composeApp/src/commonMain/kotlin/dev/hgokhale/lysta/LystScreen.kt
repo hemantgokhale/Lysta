@@ -182,32 +182,34 @@ private fun LystItem(
 private fun AddItem(list: Lyst, listState: LazyListState) {
     var inEditMode by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    if (inEditMode) {
-        ItemEditor(
-            list = list,
-            onDone = { description, checked ->
-                if (description.isNotBlank()) {
-                    val item = list.addItem(description, checked)
-                    coroutineScope.launch {
-                        val index = list.itemsToRender.value.indexOf(item)
-                        if (index != -1) listState.animateScrollToItem(index)
+    Row(modifier = Modifier.onFocusChanged { inEditMode = it.hasFocus }) {
+        if (inEditMode) {
+            ItemEditor(
+                list = list,
+                onDone = { description, checked ->
+                    if (description.isNotBlank()) {
+                        val item = list.addItem(description, checked)
+                        coroutineScope.launch {
+                            val index = list.itemsToRender.value.indexOf(item)
+                            if (index != -1) listState.animateScrollToItem(index)
+                        }
                     }
+                    inEditMode = false
+                },
+                onCancel = { inEditMode = false }
+            )
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable { inEditMode = true },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // We don't really need an IconButton here since the entire row is clickable, but using it makes this item align with all other items.
+                // This is because Compose automatically adds padding around a tappable target so that it has a minimum recommended touch target size.
+                IconButton(onClick = { inEditMode = true }) {
+                    Icon(imageVector = Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onBackground)
                 }
-                inEditMode = false
-            },
-            onCancel = { inEditMode = false }
-        )
-    } else {
-        Row(
-            modifier = Modifier.fillMaxWidth().clickable { inEditMode = true },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // We don't really need an IconButton here since the entire row is clickable, but using it makes this item align with all other items.
-            // This is because Compose automatically adds padding around a tappable target so that it has a minimum recommended touch target size.
-            IconButton(onClick = { inEditMode = true }) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onBackground)
+                Text("Add item", color = MaterialTheme.colorScheme.onBackground)
             }
-            Text("Add item", color = MaterialTheme.colorScheme.onBackground)
         }
     }
 }
@@ -256,7 +258,6 @@ private fun ItemEditor(
         }
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
-            focusRequester.captureFocus() // TODO: Rethink this interaction.
         }
     }
 }
