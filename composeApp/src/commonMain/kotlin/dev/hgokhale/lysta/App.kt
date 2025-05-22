@@ -26,7 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 
 @Composable
-fun App(navController: NavHostController = rememberNavController(), viewModel: LystViewModel = viewModel { LystViewModel() }) {
+fun App(navController: NavHostController = rememberNavController(), viewModel: LystaViewModel = viewModel { LystaViewModel() }) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -35,8 +35,8 @@ fun App(navController: NavHostController = rememberNavController(), viewModel: L
             // If the user chooses to navigate away when a snackbar is showing, dismiss the snackbar.
             snackbarHostState.currentSnackbarData?.dismiss()
             when (event) {
-                is LystViewModel.NavigationEvent.Navigate -> navController.navigate(event.route)
-                is LystViewModel.NavigationEvent.NavigateBack -> navController.popBackStack()
+                is LystaViewModel.NavigationEvent.Navigate -> navController.navigate(event.route)
+                is LystaViewModel.NavigationEvent.NavigateBack -> navController.popBackStack()
             }
         }
     }

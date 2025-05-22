@@ -14,7 +14,7 @@ import androidx.savedstate.read
 fun NavGraph(
     paddingValues: PaddingValues,
     navController: NavHostController,
-    viewModel: LystViewModel
+    viewModel: LystaViewModel
 ) {
     NavHost(
         navController = navController,

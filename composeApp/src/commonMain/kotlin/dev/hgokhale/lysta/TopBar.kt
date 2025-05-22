@@ -28,20 +28,20 @@ import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(viewModel: LystViewModel) {
+fun TopBar(viewModel: LystaViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     TopAppBar(
         title = { TopBarTitle(uiState) },
         navigationIcon = {
-            if ((uiState as? LystViewModel.UIState.Lyst)?.isListReady == true) {
+            if ((uiState as? LystaViewModel.UIState.Lyst)?.isListReady == true) {
                 IconButton(onClick = { viewModel.onBackArrowClicked() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             }
         },
         actions = {
-            (uiState as? LystViewModel.UIState.Lyst)?.let { lystState ->
+            (uiState as? LystaViewModel.UIState.Lyst)?.let { lystState ->
                 lystState.lyst?.let { list ->
                     val showChecked by list.showChecked.collectAsStateWithLifecycle()
                     IconButton(onClick = { viewModel.onShowCheckedClicked() }) {
@@ -67,10 +67,10 @@ fun TopBar(viewModel: LystViewModel) {
 }
 
 @Composable
-private fun TopBarTitle(uiState: LystViewModel.UIState) {
+private fun TopBarTitle(uiState: LystaViewModel.UIState) {
     val textStyle = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onBackground)
 
-    (uiState as? LystViewModel.UIState.Lyst)
+    (uiState as? LystaViewModel.UIState.Lyst)
         ?.let { lystState ->
             lystState.lyst?.let { list ->
                 Row(verticalAlignment = Alignment.CenterVertically) {

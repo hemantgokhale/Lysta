@@ -18,7 +18,7 @@ sealed class NavigationDestination(val route: String) {
     }
 }
 
-class LystViewModel : ViewModel() {
+class LystaViewModel : ViewModel() {
     sealed class UIState(val title: String, val showFAB: Boolean) {
         class Home : UIState(title = "My lists", showFAB = true)
         class Lyst(val lyst: dev.hgokhale.lysta.Lyst? = null, title: String = "") : UIState(title = title, showFAB = false) {

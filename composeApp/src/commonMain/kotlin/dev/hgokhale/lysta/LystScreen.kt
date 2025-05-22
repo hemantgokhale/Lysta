@@ -51,18 +51,18 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
-fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystViewModel) {
+fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystaViewModel) {
     LaunchedEffect(listId) { viewModel.loadList(listId) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    (uiState as? LystViewModel.UIState.Lyst)
+    (uiState as? LystaViewModel.UIState.Lyst)
         ?.lyst
         ?.let { Lyst(viewModel = viewModel, list = it, modifier = modifier) }
         ?: LoadingIndicator(modifier = modifier)
 }
 
 @Composable
-private fun Lyst(viewModel: LystViewModel, list: Lyst, modifier: Modifier = Modifier) {
+private fun Lyst(viewModel: LystaViewModel, list: Lyst, modifier: Modifier = Modifier) {
     val itemsToRender by list.itemsToRender.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->

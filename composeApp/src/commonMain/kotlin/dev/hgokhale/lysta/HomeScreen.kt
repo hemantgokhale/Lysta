@@ -36,17 +36,17 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, viewModel: LystViewModel) {
+fun HomeScreen(modifier: Modifier = Modifier, viewModel: LystaViewModel) {
     LaunchedEffect(Unit) { viewModel.goHome() }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    (uiState as? LystViewModel.UIState.Home)
+    (uiState as? LystaViewModel.UIState.Home)
         ?.let { Home(modifier = modifier, viewModel = viewModel) }
         ?: LoadingIndicator(modifier = modifier)
 }
 
 @Composable
-private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
+private fun Home(modifier: Modifier = Modifier, viewModel: LystaViewModel) {
     val lists by viewModel.lists.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -75,7 +75,7 @@ private fun Home(modifier: Modifier = Modifier, viewModel: LystViewModel) {
 
 @Composable
 private fun HomeItem(
-    viewModel: LystViewModel,
+    viewModel: LystaViewModel,
     item: Lyst,
     onDelete: () -> Unit,
     reorderableCollectionItemScope: ReorderableCollectionItemScope,
