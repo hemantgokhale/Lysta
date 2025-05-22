@@ -1,0 +1,95 @@
+CREATE TABLE ListItem (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    listId INTEGER NOT NULL,
+    description TEXT NOT NULL,
+    displayIndex INTEGER NOT NULL,
+    isDeleted INTEGER NOT NULL,
+    FOREIGN KEY (listId) REFERENCES List (id)
+);
+
+selectAll:
+SELECT * FROM ListItem
+WHERE listId = :listId AND isDeleted = 0;
+
+insert:
+INSERT INTO ListItem(listId, description, displayIndex, isDeleted)
+VALUES ?;
+
+updateDescription:
+UPDATE ListItem
+SET description = ?
+WHERE id = ?;
+
+delete {
+UPDATE ListItem
+SET isDeleted = 1
+WHERE id = :id;
+
+-- pull items up
+UPDATE ListItem
+SET displayIndex = displayIndex - 1
+WHERE listId = (SELECT listId FROM ListItem WHERE id = :id)
+  AND isDeleted = 0
+  AND displayIndex > (SELECT displayIndex FROM ListItem WHERE id = :id);
+}
+
+restore {
+UPDATE ListItem
+SET isDeleted = 1
+WHERE id = :id;
+
+-- push items down
+UPDATE ListItem
+SET displayIndex = displayIndex + 1
+WHERE listId = (SELECT listId FROM ListItem WHERE id = :id)
+  AND isDeleted = 0
+  AND displayIndex >= (SELECT displayIndex FROM ListItem WHERE id = :id);
+}
+
+deleteForever: -- called when the app launches
+DELETE FROM ListItem
+WHERE isDeleted = 1;
+
+moveUp {
+-- Ensure current_index > new_index, abort the transaction if the condition fails
+SELECT CASE
+    WHEN (SELECT displayIndex FROM ListItem WHERE id = :id) <= :newIndex THEN
+        RAISE(ABORT, 'Transaction aborted: newIndex must be less than current index')
+    ELSE 1
+END;
+
+-- 1. Moving UP in the list (current_index > new_index)
+UPDATE ListItem
+SET displayIndex = displayIndex + 1
+WHERE listId = (SELECT listId FROM ListItem WHERE id = :id)
+  AND isDeleted = 0
+  AND displayIndex < (SELECT displayIndex FROM ListItem WHERE id = :id)
+  AND displayIndex >= :newIndex;
+
+-- 2. Update the displayIndex of the moved item
+UPDATE ListItem
+SET displayIndex = :newIndex
+WHERE id = :id;
+}
+
+moveDown {
+-- Ensure current_index < new_index, abort the transaction if the condition fails
+SELECT CASE
+    WHEN (SELECT displayIndex FROM ListItem WHERE id = :id) >= :newIndex THEN
+        RAISE(ABORT, 'Transaction aborted: newIndex must be greater than current index')
+    ELSE 1
+END;
+
+-- 1. Moving DOWN in the list (current_index < new_index)
+UPDATE ListItem
+SET displayIndex = displayIndex - 1
+WHERE listId = (SELECT listId FROM ListItem WHERE id = :id)
+  AND isDeleted = 0
+  AND displayIndex > (SELECT displayIndex FROM ListItem WHERE id = :id)
+  AND displayIndex <= :newIndex;
+
+-- 2. Update the displayIndex of the moved item
+UPDATE ListItem
+SET displayIndex = :newIndex
+WHERE id = :id;
+}
