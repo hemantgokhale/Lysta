@@ -1,4 +1,4 @@
-package dev.hgokhale.lysta
+package dev.hgokhale.lysta.app
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme

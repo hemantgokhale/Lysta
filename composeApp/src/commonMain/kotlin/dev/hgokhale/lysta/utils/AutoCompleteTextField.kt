@@ -1,4 +1,4 @@
-package dev.hgokhale.lysta
+package dev.hgokhale.lysta.utils
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -27,6 +27,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import kotlin.math.roundToInt
 
 
@@ -52,7 +53,7 @@ fun AutoCompleteTextField(
         Popup(
             onDismissRequest = { showPopup = false },
             offset = IntOffset(textFieldOffset.x, textFieldOffset.y - popupHeight - popupToTextFieldOffset),
-            properties = androidx.compose.ui.window.PopupProperties(focusable = false)
+            properties = PopupProperties(focusable = false)
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.inverseSurface,

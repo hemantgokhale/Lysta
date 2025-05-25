@@ -1,5 +1,6 @@
-package dev.hgokhale.lysta
+package dev.hgokhale.lysta.lyst
 
+import dev.hgokhale.lysta.utils.Highlightable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

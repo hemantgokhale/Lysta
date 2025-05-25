@@ -1,7 +1,8 @@
-package dev.hgokhale.lysta
+package dev.hgokhale.lysta.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.hgokhale.lysta.lyst.Lyst
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -10,6 +11,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.collections.minus
+import kotlin.collections.plus
 
 sealed class NavigationDestination(val route: String) {
     data object Home : NavigationDestination("home")
@@ -21,8 +24,8 @@ sealed class NavigationDestination(val route: String) {
 class LystaViewModel : ViewModel() {
     sealed class UIState(val title: String, val showFAB: Boolean) {
         class Home : UIState(title = "My lists", showFAB = true)
-        class Lyst(val lyst: dev.hgokhale.lysta.Lyst? = null, title: String = "") : UIState(title = title, showFAB = false) {
-            constructor(lyst: dev.hgokhale.lysta.Lyst) : this(lyst = lyst, title = lyst.name.value)
+        class Lyst(val lyst: dev.hgokhale.lysta.lyst.Lyst? = null, title: String = "") : UIState(title = title, showFAB = false) {
+            constructor(lyst: dev.hgokhale.lysta.lyst.Lyst) : this(lyst = lyst, title = lyst.name.value)
 
             val isListReady: Boolean get() = lyst != null
         }
@@ -62,7 +65,7 @@ class LystaViewModel : ViewModel() {
 
     private fun createList(): String {
         val list = Lyst(name = "New list", listOf(), viewModelScope)
-        _lists.value += list
+        _lists.value + list
         publishNewItemNotification(list)
         return list.id
     }
@@ -99,7 +102,7 @@ class LystaViewModel : ViewModel() {
             val index = _lists.value.indexOfFirst { it.id == id }
             if (index != -1) {
                 val listToDelete = _lists.value[index]
-                _lists.value -= listToDelete
+                _lists.value - listToDelete
                 deletedList = Pair(index, listToDelete)
                 _snackbarEvents.send(
                     SnackbarEvent(
