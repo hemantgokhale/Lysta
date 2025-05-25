@@ -33,18 +33,18 @@ fun App(navController: NavHostController = rememberNavController(), viewModel: L
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
-        for (event in viewModel.navigationEvents) {
+        for (event in NavigationEventBus.events) {
             // If the user chooses to navigate away when a snackbar is showing, dismiss the snackbar.
             snackbarHostState.currentSnackbarData?.dismiss()
             when (event) {
-                is LystaViewModel.NavigationEvent.Navigate -> navController.navigate(event.route)
-                is LystaViewModel.NavigationEvent.NavigateBack -> navController.popBackStack()
+                is NavigationEvent.Navigate -> navController.navigate(event.route)
+                is NavigationEvent.NavigateBack -> navController.popBackStack()
             }
         }
     }
 
     LaunchedEffect(Unit) {
-        for (event in viewModel.snackbarEvents) {
+        for (event in SnackbarEventBus.events) {
             launch {
                 // We show a snackbar to give the user an opportunity to undo an accidental delete. Given that,
                 // we don't allow a queue of snackbars to build up. If the user proceeds to delete multiple items

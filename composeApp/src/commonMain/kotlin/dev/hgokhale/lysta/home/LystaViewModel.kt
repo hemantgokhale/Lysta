@@ -2,24 +2,18 @@ package dev.hgokhale.lysta.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.hgokhale.lysta.app.NavigationDestination
+import dev.hgokhale.lysta.app.NavigationEvent
+import dev.hgokhale.lysta.app.NavigationEventBus
+import dev.hgokhale.lysta.app.SnackbarEvent
+import dev.hgokhale.lysta.app.SnackbarEventBus
 import dev.hgokhale.lysta.lyst.Lyst
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.collections.minus
-import kotlin.collections.plus
-
-sealed class NavigationDestination(val route: String) {
-    data object Home : NavigationDestination("home")
-    data object Lyst : NavigationDestination("list/{listId}") {
-        fun routeFor(listId: String) = "list/$listId"
-    }
-}
 
 class LystaViewModel : ViewModel() {
     sealed class UIState(val title: String, val showFAB: Boolean) {
@@ -30,19 +24,6 @@ class LystaViewModel : ViewModel() {
             val isListReady: Boolean get() = lyst != null
         }
     }
-
-    sealed interface NavigationEvent {
-        data class Navigate(val route: String) : NavigationEvent
-        data object NavigateBack : NavigationEvent
-    }
-
-    data class SnackbarEvent(val message: String, val actionLabel: String, val action: (() -> Unit)? = null)
-
-    private val _navigationEvents = Channel<NavigationEvent>(capacity = Channel.CONFLATED)
-    val navigationEvents: ReceiveChannel<NavigationEvent> get() = _navigationEvents
-
-    private val _snackbarEvents = Channel<SnackbarEvent>(capacity = Channel.CONFLATED)
-    val snackbarEvents: ReceiveChannel<SnackbarEvent> get() = _snackbarEvents
 
     private val _lists = MutableStateFlow(sampleLists())
     val lists: StateFlow<List<Lyst>> = _lists.asStateFlow()
@@ -65,26 +46,26 @@ class LystaViewModel : ViewModel() {
 
     private fun createList(): String {
         val list = Lyst(name = "New list", listOf(), viewModelScope)
-        _lists.value + list
+        _lists.value += list
         publishNewItemNotification(list)
         return list.id
     }
 
     fun onListClicked(id: String) {
-        viewModelScope.launch { _navigationEvents.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(id))) }
+        viewModelScope.launch { NavigationEventBus.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(id))) }
     }
 
     fun onFabClicked() {
         viewModelScope.launch {
             when (uiState.value) {
-                is UIState.Home -> _navigationEvents.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(createList())))
+                is UIState.Home -> NavigationEventBus.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(createList())))
                 is UIState.Lyst -> {} // Currently not needed.
             }
         }
     }
 
     fun onBackArrowClicked() {
-        viewModelScope.launch { _navigationEvents.send(NavigationEvent.NavigateBack) }
+        viewModelScope.launch { NavigationEventBus.send(NavigationEvent.NavigateBack) }
     }
 
     fun loadList(id: String) {
@@ -102,9 +83,9 @@ class LystaViewModel : ViewModel() {
             val index = _lists.value.indexOfFirst { it.id == id }
             if (index != -1) {
                 val listToDelete = _lists.value[index]
-                _lists.value - listToDelete
+                _lists.value -= listToDelete
                 deletedList = Pair(index, listToDelete)
-                _snackbarEvents.send(
+                SnackbarEventBus.send(
                     SnackbarEvent(
                         message = "Deleted: ${listToDelete.name.value}",
                         actionLabel = "Undo",
@@ -131,7 +112,7 @@ class LystaViewModel : ViewModel() {
                 ?.let { lyst: Lyst ->
                     lyst.deleteItem(itemId)
                         ?.let { item ->
-                            _snackbarEvents.send(
+                            SnackbarEventBus.send(
                                 SnackbarEvent(
                                     message = "Deleted: ${item.description}",
                                     actionLabel = "Undo",
