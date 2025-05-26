@@ -1,4 +1,4 @@
-package dev.hgokhale.lysta.utils
+package dev.hgokhale.lysta.app
 
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.offset

@@ -10,7 +10,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.savedstate.read
 import dev.hgokhale.lysta.home.HomeScreen
-import dev.hgokhale.lysta.home.LystaViewModel
 import dev.hgokhale.lysta.lyst.LystScreen
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -26,17 +25,17 @@ sealed class NavigationDestination(val route: String) {
 fun NavGraph(
     paddingValues: PaddingValues,
     navController: NavHostController,
-    viewModel: LystaViewModel
+    scaffoldViewModel: ScaffoldViewModel,
 ) {
     NavHost(
         navController = navController,
         startDestination = NavigationDestination.Home.route,
         modifier = Modifier.padding(paddingValues).imePadding()
     ) {
-        composable(NavigationDestination.Home.route) { HomeScreen(viewModel = viewModel) }
+        composable(NavigationDestination.Home.route) { HomeScreen(scaffoldViewModel = scaffoldViewModel) }
         composable(NavigationDestination.Lyst.route) { backStackEntry ->
             backStackEntry.arguments?.read { getStringOrNull("listId") }?.let {
-                LystScreen(listId = it, viewModel = viewModel)
+                LystScreen(listId = it, scaffoldViewModel = scaffoldViewModel)
             }
         }
     }

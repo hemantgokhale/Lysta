@@ -43,13 +43,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.hgokhale.lysta.app.ScaffoldViewModel
+import dev.hgokhale.lysta.getPlatform
 import dev.hgokhale.lysta.utils.AutoCompleteTextField
 import dev.hgokhale.lysta.utils.Highlightable
 import dev.hgokhale.lysta.utils.LoadingIndicator
 import dev.hgokhale.lysta.utils.ScrollToNewItemEffect
 import dev.hgokhale.lysta.utils.SwipeToDeleteItem
-import dev.hgokhale.lysta.getPlatform
-import dev.hgokhale.lysta.home.LystaViewModel
 import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_drag_handle
 import org.jetbrains.compose.resources.painterResource
@@ -58,25 +59,41 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
-fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystaViewModel) {
-    LaunchedEffect(listId) { viewModel.loadList(listId) }
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    (uiState as? LystaViewModel.UIState.Lyst)
-        ?.lyst
-        ?.let { Lyst(viewModel = viewModel, list = it, modifier = modifier) }
-        ?: LoadingIndicator(modifier = modifier)
+fun LystScreen(
+    listId: String,
+    scaffoldViewModel: ScaffoldViewModel,
+    modifier: Modifier = Modifier,
+    lystViewModel: LystViewModel = viewModel { LystViewModel(listID = listId, scaffoldViewModel = scaffoldViewModel) }
+) {
+    val listLoaded by lystViewModel.loaded.collectAsStateWithLifecycle()
+    if (!listLoaded) {
+        LoadingIndicator(modifier = modifier)
+    } else {
+        ConfigureScaffold(scaffoldViewModel = scaffoldViewModel, lystViewModel = lystViewModel)
+        Lyst(lystViewModel = lystViewModel, modifier = modifier)
+    }
 }
 
 @Composable
-private fun Lyst(viewModel: LystaViewModel, list: Lyst, modifier: Modifier = Modifier) {
-    val itemsToRender by list.itemsToRender.collectAsStateWithLifecycle()
+private fun ConfigureScaffold(scaffoldViewModel: ScaffoldViewModel, lystViewModel: LystViewModel) {
+    LaunchedEffect(Unit) {
+        scaffoldViewModel.topBarTitle.value = lystViewModel.name.value
+        scaffoldViewModel.onTitleChange.value = { lystViewModel.onNameChanged(it) }
+        scaffoldViewModel.showBackButton.value = true
+        scaffoldViewModel.fabAction.value = null
+        lystViewModel.setTopBarActions()
+    }
+}
+
+@Composable
+private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
+    val itemsToRender by lystViewModel.itemsToRender.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        list.moveItem(from.index, to.index)
+        lystViewModel.moveItem(from.index, to.index)
     }
 
-    ScrollToNewItemEffect(list.newItem, lazyListState)
+    ScrollToNewItemEffect(lystViewModel.newItem, lazyListState)
 
     Column(modifier = modifier) {
         LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
@@ -84,31 +101,31 @@ private fun Lyst(viewModel: LystaViewModel, list: Lyst, modifier: Modifier = Mod
                 ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
                     val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
                     Surface(shadowElevation = elevation) {
-                        val onDelete = { viewModel.deleteItem(list.id, item.id) }
+                        val onDelete = { lystViewModel.deleteItem(item.id) }
                         SwipeToDeleteItem(onDelete = onDelete) {
                             Highlightable(item) { modifier ->
-                                LystItem(list = list, item = item, onDelete = onDelete, reorderableCollectionItemScope = this, modifier = modifier)
+                                LystItem(lystViewModel = lystViewModel, item = item, onDelete = onDelete, reorderableCollectionItemScope = this, modifier = modifier)
                             }
                         }
                     }
                 }
             }
         }
-        AddItem(list)
+        AddItem(lystViewModel)
     }
 }
 
 @Composable
 private fun LystItem(
-    list: Lyst,
-    item: Lyst.Item,
+    lystViewModel: LystViewModel,
+    item: LystViewModel.UIItem,
     onDelete: () -> Unit,
     reorderableCollectionItemScope: ReorderableCollectionItemScope,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
     var description by remember { mutableStateOf(item.description) }
-    val listIsSorted by list.sorted.collectAsStateWithLifecycle()
+    val listIsSorted by lystViewModel.sorted.collectAsStateWithLifecycle()
     var isHovered by remember { mutableStateOf(false) }
     val isMobile = remember { getPlatform().isMobile }
 
@@ -129,7 +146,7 @@ private fun LystItem(
     ) {
         Checkbox(
             checked = item.checked,
-            onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },
+            onCheckedChange = { lystViewModel.onItemCheckedChanged(itemId = item.id, isChecked = it) },
             colors = CheckboxColors(
                 checkedCheckmarkColor = MaterialTheme.colorScheme.onSecondary,
                 uncheckedCheckmarkColor = MaterialTheme.colorScheme.background,
@@ -152,7 +169,7 @@ private fun LystItem(
                 .weight(1f)
                 .onFocusChanged { focusState ->
                     if (!focusState.isFocused) {
-                        list.onItemDescriptionChanged(itemId = item.id, description = description)
+                        lystViewModel.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
             textStyle = LocalTextStyle.current.copy(
@@ -185,15 +202,15 @@ private fun LystItem(
 }
 
 @Composable
-private fun AddItem(list: Lyst) {
+private fun AddItem(lystViewModel: LystViewModel) {
     var inEditMode by remember { mutableStateOf(false) }
     Row(modifier = Modifier.onFocusChanged { inEditMode = it.hasFocus }) {
         if (inEditMode) {
             ItemEditor(
-                list = list,
+                lystViewModel = lystViewModel,
                 onDone = { description, checked ->
                     if (description.isNotBlank()) {
-                        list.addItem(description, checked)
+                        lystViewModel.addItem(description, checked)
                     }
                     inEditMode = false
                 },
@@ -217,7 +234,7 @@ private fun AddItem(list: Lyst) {
 
 @Composable
 private fun ItemEditor(
-    list: Lyst,
+    lystViewModel: LystViewModel,
     onDone: (String, Boolean) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -235,10 +252,10 @@ private fun ItemEditor(
             value = text,
             onValueChange = {
                 text = it
-                autocompleteSuggestions = list.getAutocompleteSuggestions(query = it)
+                autocompleteSuggestions = lystViewModel.getAutocompleteSuggestions(query = it)
             },
             onSuggestionSelected = {
-                list.autocompleteSuggestionSelected(it)
+                lystViewModel.autocompleteSuggestionSelected(it)
                 onCancel()
             },
             modifier = Modifier

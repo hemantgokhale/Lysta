@@ -23,13 +23,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import dev.hgokhale.lysta.home.LystaViewModel
-import dev.hgokhale.lysta.utils.DraggableFAB
 import kotlinx.coroutines.launch
 
+
 @Composable
-fun App(navController: NavHostController = rememberNavController(), viewModel: LystaViewModel = viewModel { LystaViewModel() }) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+fun App(navController: NavHostController = rememberNavController(), scaffoldViewModel: ScaffoldViewModel = viewModel { ScaffoldViewModel() }) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -69,16 +67,17 @@ fun App(navController: NavHostController = rememberNavController(), viewModel: L
             modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.inverseSurface),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val fabAction by scaffoldViewModel.fabAction.collectAsStateWithLifecycle()
             val primaryTextStyle = MaterialTheme.typography.bodyLarge
             val maxWidth = primaryTextStyle.fontSize.value.dp * 40 // enough space to fit ~80 chars
             CompositionLocalProvider(LocalTextStyle provides primaryTextStyle) {
                 Scaffold(
                     modifier = Modifier.widthIn(max = maxWidth),
-                    topBar = { TopBar(viewModel = viewModel) },
+                    topBar = { TopBar(viewModel = scaffoldViewModel) },
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { LystaSnackbar(it) }) },
-                    floatingActionButton = { if (uiState.showFAB) DraggableFAB { viewModel.onFabClicked() } },
+                    floatingActionButton = { fabAction?.let { DraggableFAB { it() } } },
                 ) { paddingValues ->
-                    NavGraph(paddingValues, navController, viewModel)
+                    NavGraph(paddingValues, navController, scaffoldViewModel)
                 }
             }
         }
