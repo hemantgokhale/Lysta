@@ -6,7 +6,8 @@ import dev.hgokhale.lysta.app.ScaffoldViewModel
 import dev.hgokhale.lysta.app.SnackbarEvent
 import dev.hgokhale.lysta.app.SnackbarEventBus
 import dev.hgokhale.lysta.app.TopBarAction
-import dev.hgokhale.lysta.home.TestRepository
+import dev.hgokhale.lysta.model.Lyst
+import dev.hgokhale.lysta.repository.InMemoryRepository
 import dev.hgokhale.lysta.utils.Highlightable
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,22 +21,6 @@ import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_check_box
 import lysta.composeapp.generated.resources.ic_sort
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
-
-@OptIn(ExperimentalUuidApi::class)
-data class Lyst(
-    val name: String,
-    val isSorted: Boolean = false,
-    val showChecked: Boolean = true,
-    val items: List<Item> = emptyList(),
-    val id: String = Uuid.random().toString(),
-) {
-    data class Item(
-        val description: String,
-        val checked: Boolean = false,
-        val id: String = Uuid.random().toString(),
-    )
-}
 
 @OptIn(ExperimentalUuidApi::class)
 class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
@@ -51,6 +36,9 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     private val _loaded = MutableStateFlow(false)
     val loaded = _loaded.asStateFlow()
 
+    private val _listNotFound = MutableStateFlow(false)
+    val listNotFound = _listNotFound.asStateFlow() // TODO use this
+
     private val _name = MutableStateFlow("")
     val name = _name.asStateFlow()
 
@@ -61,16 +49,21 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     val showChecked = _showChecked.asStateFlow()
 
     private val _items: MutableStateFlow<List<UIItem>> = MutableStateFlow(emptyList())
+    private val repository = InMemoryRepository
 
     init {
         viewModelScope.launch {
-            //LystRepository.loadList
-            val list = TestRepository.lists.first { it.id == listID } // TODO handle the case of not found
-
-            _items.value = list.items.map { UIItem(it) }
-            _name.value = list.name
-            _sorted.value = list.isSorted
-            _showChecked.value = list.showChecked
+            repository
+                .getList(listID)
+                ?.let { list ->
+                    _items.value = list.items.map { UIItem(it) }
+                    _name.value = list.name
+                    _sorted.value = list.isSorted
+                    _showChecked.value = list.showChecked
+                }
+                ?: run {
+                    _listNotFound.value = true
+                }
             _loaded.value = true
         }
     }
@@ -106,25 +99,25 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
 
     fun onShowCheckedClicked() {
         _showChecked.value = !showChecked.value
+        repository.updateShowChecked(listID, showChecked.value)
         setTopBarActions()
-        // LystRepository.updateShowChecked
     }
 
     fun onSortClicked() {
         _sorted.value = !sorted.value
+        repository.updateSorted(listID, sorted.value)
         setTopBarActions()
-        // LystRepository.updateSorted
     }
 
     fun onNameChanged(name: String) {
         _name.value = name
+        repository.updateName(listID, name)
         scaffoldViewModel.topBarTitle.value = name
-        // LystRepository.updateName
     }
 
     fun addItem(description: String = "", checked: Boolean = false): UIItem {
         val item = Lyst.Item(description = description, checked = checked)
-        // LystRepository.newItem
+        repository.addItem(listID, item)
         val screenItem = UIItem(listItem = item, showHighlight = true)
         _items.value += screenItem
         publishNewItemNotification(screenItem)
@@ -144,8 +137,8 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
             if (index != -1) {
                 val itemToDelete = _items.value[index]
                 _items.value -= itemToDelete
+                repository.deleteItem(listID, itemId)
                 deletedItem = Pair(index, itemToDelete)
-                // LystRepository.deleteItem
 
                 SnackbarEventBus.send(
                     SnackbarEvent(
@@ -161,17 +154,18 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     fun undeleteItem() {
         deletedItem?.let { (index, item) ->
             _items.value = _items.value.toMutableList().apply { add(index, item.apply { showHighlight = true }) }
+            repository.restoreItem(listID, item.id, index)
             publishNewItemNotification(item)
             deletedItem = null
-            // LystRepository.restoreItem
         }
     }
 
     fun onItemDescriptionChanged(itemId: String, description: String) {
         _items.value = _items.value.map { item ->
             if (item.id == itemId) {
-                item.copy(listItem = item.listItem.copy(description = description))
-                // LystRepository.updateDescription
+                item
+                    .copy(listItem = item.listItem.copy(description = description))
+                    .also { repository.updateItemDescription(listID, itemId, description) }
             } else {
                 item
             }
@@ -181,8 +175,9 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     fun onItemCheckedChanged(itemId: String, isChecked: Boolean) {
         _items.value = _items.value.map { item ->
             if (item.id == itemId) {
-                item.copy(listItem = item.listItem.copy(checked = isChecked))
-                // LystRepository.updateIsChecked
+                item
+                    .copy(listItem = item.listItem.copy(checked = isChecked))
+                    .also { repository.updateItemChecked(listID, itemId, isChecked) }
             } else {
                 item
             }
@@ -194,7 +189,7 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
             val mutableList = _items.value.toMutableList()
             mutableList.add(to, mutableList.removeAt(from))
             _items.value = mutableList
-            // LystRepository.moveItem
+            repository.moveItem(listID, _items.value[from].id, from, to)
         }
     }
 
@@ -210,8 +205,9 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     fun autocompleteSuggestionSelected(suggestion: String) {
         _items.value = _items.value.map { item ->
             if (item.description == suggestion && item.checked) {
-                item.copy(listItem = item.listItem.copy(checked = false))
-                // LystRepository.updateIsChecked
+                item
+                    .copy(listItem = item.listItem.copy(checked = false))
+                    .also { repository.updateItemChecked(listID, item.id, checked = false) }
             } else {
                 item
             }

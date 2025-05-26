@@ -7,7 +7,9 @@ import dev.hgokhale.lysta.app.NavigationEvent
 import dev.hgokhale.lysta.app.NavigationEventBus
 import dev.hgokhale.lysta.app.SnackbarEvent
 import dev.hgokhale.lysta.app.SnackbarEventBus
-import dev.hgokhale.lysta.lyst.Lyst
+import dev.hgokhale.lysta.model.Lyst
+import dev.hgokhale.lysta.model.LystInfo
+import dev.hgokhale.lysta.repository.InMemoryRepository
 import dev.hgokhale.lysta.utils.Highlightable
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,11 +27,10 @@ class HomeViewModel() : ViewModel() {
     private val _lists: MutableStateFlow<List<UIItem>> = MutableStateFlow(emptyList())
     val lists: StateFlow<List<UIItem>> = _lists.asStateFlow()
 
+    val repository = InMemoryRepository
     init {
         viewModelScope.launch {
-            // Repository.loadLists
-
-            _lists.value = TestRepository.lists.map { UIItem(it.id, it.name) }
+            _lists.value = repository.getLists().map { UIItem(it.id, it.name) }
             _loaded.value = true
         }
     }
@@ -44,14 +45,16 @@ class HomeViewModel() : ViewModel() {
             val mutableList = _lists.value.toMutableList()
             mutableList.add(to, mutableList.removeAt(from))
             _lists.value = mutableList
+            repository.moveList(from, to)
         }
     }
 
     fun createList(): String {
         val lyst = Lyst(name = "New list")
         val newItem = UIItem(lyst.id, lyst.name)
-        // LystRepository.newList
         _lists.value += newItem
+        repository.newList(lyst)
+
         publishNewItemNotification(newItem)
         viewModelScope.launch {
             NavigationEventBus.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(lyst.id)))
@@ -69,6 +72,8 @@ class HomeViewModel() : ViewModel() {
             if (index != -1) {
                 val listToDelete = _lists.value[index]
                 _lists.value -= listToDelete
+                repository.deleteList(id)
+
                 deletedList = Pair(index, listToDelete)
                 SnackbarEventBus.send(
                     SnackbarEvent(
@@ -77,7 +82,6 @@ class HomeViewModel() : ViewModel() {
                         action = { undeleteList() }
                     )
                 )
-                // LystRepository.deleteList
             }
         }
     }
@@ -86,9 +90,9 @@ class HomeViewModel() : ViewModel() {
         deletedList
             ?.let { (index, list) ->
                 _lists.value = _lists.value.toMutableList().also { it.add(index, list.apply { showHighlight = true }) }
+                repository.restoreList(index, LystInfo(list.id, list.name))
                 deletedList = null
                 publishNewItemNotification(list)
-                // LystRepository.restoreLyst
             }
     }
 
@@ -98,52 +102,4 @@ class HomeViewModel() : ViewModel() {
             if (index != -1) _newItem.emit(index)
         }
     }
-}
-
-object TestRepository {
-    val lists: List<Lyst> = listOf(
-        Lyst(
-            name = "Groceries",
-            items = listOf(
-                Lyst.Item(description = "Milk", checked = false),
-                Lyst.Item(description = "Eggs", checked = false),
-                Lyst.Item(description = "Bread", checked = true),
-                Lyst.Item(description = "Butter", checked = true),
-                Lyst.Item(description = "Cheese", checked = true),
-                Lyst.Item(description = "Apples", checked = false),
-                Lyst.Item(description = "Oranges", checked = false),
-                Lyst.Item(description = "Bananas", checked = false),
-                Lyst.Item(description = "Blueberries", checked = true),
-                Lyst.Item(description = "Raspberries", checked = true),
-                Lyst.Item(description = "Grapes", checked = false),
-                Lyst.Item(description = "Strawberries", checked = false),
-                Lyst.Item(description = "Blackberries", checked = true),
-                Lyst.Item(description = "Peaches", checked = true),
-                Lyst.Item(description = "Plums", checked = true),
-                Lyst.Item(description = "Pears", checked = true),
-            )
-        ),
-
-        Lyst(
-            name = "Backpacking",
-            items = listOf(
-                Lyst.Item(description = "Tent", checked = false),
-                Lyst.Item(description = "Stove", checked = false),
-                Lyst.Item(description = "Fuel", checked = true),
-                Lyst.Item(description = "Backpack", checked = true),
-                Lyst.Item(description = "Rain fly", checked = true),
-                Lyst.Item(description = "Food", checked = false),
-                Lyst.Item(description = "Water filter", checked = false),
-                Lyst.Item(description = "Water bottle", checked = false),
-                Lyst.Item(description = "Shoes", checked = true),
-                Lyst.Item(description = "Hat", checked = true),
-                Lyst.Item(description = "Sunglasses", checked = false),
-                Lyst.Item(description = "First aid kit", checked = false),
-                Lyst.Item(description = "Headlamp", checked = true),
-                Lyst.Item(description = "Radio", checked = true),
-                Lyst.Item(description = "Batteries", checked = true),
-                Lyst.Item(description = "Sleeping bag", checked = true),
-            )
-        )
-    )
 }
