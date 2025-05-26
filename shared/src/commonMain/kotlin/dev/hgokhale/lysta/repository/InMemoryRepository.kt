@@ -6,17 +6,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-object InMemoryRepository {
+object InMemoryRepository: LystaRepository {
     private val lists: MutableList<Lyst> = exampleLists
     private var deletedList: Lyst? = null
     private var deletedItem: Lyst.Item? = null
 
     private val _listNames = MutableStateFlow<List<LystInfo>>(lists.map { LystInfo(it.name, it.id) })
-    val listNames: StateFlow<List<LystInfo>> = _listNames.asStateFlow()
+    override val listNames: StateFlow<List<LystInfo>> = _listNames.asStateFlow()
 
-    fun getList(id: String): Lyst? = lists.find { it.id == id }
+    override fun getList(id: String): Lyst? = lists.find { it.id == id }
 
-    fun moveList(from: Int, to: Int) {
+    override fun moveList(from: Int, to: Int) {
         if (from != to && from in lists.indices && to in lists.indices) {
             lists.add(to, lists.removeAt(from))
             updateListNames()
@@ -27,9 +27,11 @@ object InMemoryRepository {
         _listNames.value = lists.map { LystInfo(it.name, it.id) }
     }
 
-    fun newList(lyst: Lyst) = lists.add(lyst)
+    override fun newList(lyst: Lyst) {
+        lists.add(lyst)
+    }
 
-    fun deleteList(id: String) = {
+    override fun deleteList(id: String) {
         lists.find { it.id == id }?.let {
             lists.remove(it)
             deletedList = it
@@ -37,7 +39,7 @@ object InMemoryRepository {
         }
     }
 
-    fun restoreList(index: Int, list: LystInfo) {
+    override fun restoreList(index: Int, list: LystInfo) {
         deletedList?.let {
             if (it.id == list.id) lists.add(index, it)
             deletedList = null
@@ -45,32 +47,32 @@ object InMemoryRepository {
         }
     }
 
-    fun updateShowChecked(id: String, showChecked: Boolean) {
+    override fun updateShowChecked(id: String, showChecked: Boolean) {
         indexOrNull(id)?.let { index ->
             lists[index] = lists[index].copy(showChecked = showChecked)
         }
     }
 
-    fun updateSorted(id: String, sorted: Boolean) {
+    override fun updateSorted(id: String, sorted: Boolean) {
         indexOrNull(id)?.let { index ->
             lists[index] = lists[index].copy(isSorted = sorted)
         }
     }
 
-    fun updateName(id: String, name: String) {
+    override fun updateName(id: String, name: String) {
         indexOrNull(id)?.let { index ->
             lists[index] = lists[index].copy(name = name)
             updateListNames()
         }
     }
 
-    fun addItem(id: String, item: Lyst.Item) {
+    override fun addItem(id: String, item: Lyst.Item) {
         indexOrNull(id)?.let { index ->
             lists[index] = lists[index].copy(items = lists[index].items + item)
         }
     }
 
-    fun deleteItem(listId: String, itemId: String) {
+    override fun deleteItem(listId: String, itemId: String) {
         indexOrNull(listId)?.let { index ->
             lists[index].items.find { it.id == itemId }?.let { item ->
                 lists[index] = lists[index].copy(items = lists[index].items - item)
@@ -79,7 +81,7 @@ object InMemoryRepository {
         }
     }
 
-    fun restoreItem(listId: String, itemId: String, itemIndex: Int) {
+    override fun restoreItem(listId: String, itemId: String, itemIndex: Int) {
         indexOrNull(listId)?.let { index ->
             deletedItem?.let { item ->
                 if (item.id == itemId) {
@@ -92,7 +94,7 @@ object InMemoryRepository {
         }
     }
 
-    fun updateItemDescription(listId: String, itemId: String, description: String) {
+    override fun updateItemDescription(listId: String, itemId: String, description: String) {
         indexOrNull(listId)?.let { index ->
             lists[index].items.find { it.id == itemId }?.let { item ->
                 lists[index] = lists[index].copy(items = lists[index].items.map {
@@ -102,7 +104,7 @@ object InMemoryRepository {
         }
     }
 
-    fun updateItemChecked(listId: String, itemId: String, checked: Boolean) {
+    override fun updateItemChecked(listId: String, itemId: String, checked: Boolean) {
         indexOrNull(listId)?.let { index ->
             lists[index].items.find { it.id == itemId }?.let { item ->
                 lists[index] = lists[index].copy(items = lists[index].items.map {
@@ -112,7 +114,7 @@ object InMemoryRepository {
         }
     }
 
-    fun moveItem(listId: String, itemId: String, from: Int, to: Int) {
+    override fun moveItem(listId: String, itemId: String, from: Int, to: Int) {
         indexOrNull(listId)?.let { index ->
             lists[index].items.find { it.id == itemId }?.let { item ->
                 val mutableItems = lists[index].items.toMutableList()
