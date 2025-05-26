@@ -24,14 +24,16 @@ class HomeViewModel() : ViewModel() {
     private val _loaded = MutableStateFlow(false)
     val loaded = _loaded.asStateFlow()
 
+    val repository = InMemoryRepository
     private val _lists: MutableStateFlow<List<UIItem>> = MutableStateFlow(emptyList())
     val lists: StateFlow<List<UIItem>> = _lists.asStateFlow()
 
-    val repository = InMemoryRepository
     init {
         viewModelScope.launch {
-            _lists.value = repository.getLists().map { UIItem(it.id, it.name) }
-            _loaded.value = true
+            repository.listNames.collect { names ->
+                _lists.value = names.map { UIItem(id = it.id, name = it.name) }
+                _loaded.value = true
+            }
         }
     }
 

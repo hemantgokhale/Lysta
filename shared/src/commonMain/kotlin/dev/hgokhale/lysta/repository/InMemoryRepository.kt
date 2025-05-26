@@ -2,19 +2,29 @@ package dev.hgokhale.lysta.repository
 
 import dev.hgokhale.lysta.model.Lyst
 import dev.hgokhale.lysta.model.LystInfo
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 object InMemoryRepository {
     private val lists: MutableList<Lyst> = exampleLists
     private var deletedList: Lyst? = null
     private var deletedItem: Lyst.Item? = null
 
-    fun getLists(): List<LystInfo> = lists.map { LystInfo(it.name, it.id) }
+    private val _listNames = MutableStateFlow<List<LystInfo>>(lists.map { LystInfo(it.name, it.id) })
+    val listNames: StateFlow<List<LystInfo>> = _listNames.asStateFlow()
+
     fun getList(id: String): Lyst? = lists.find { it.id == id }
 
     fun moveList(from: Int, to: Int) {
         if (from != to && from in lists.indices && to in lists.indices) {
             lists.add(to, lists.removeAt(from))
+            updateListNames()
         }
+    }
+
+    private fun updateListNames() {
+        _listNames.value = lists.map { LystInfo(it.name, it.id) }
     }
 
     fun newList(lyst: Lyst) = lists.add(lyst)
@@ -23,6 +33,7 @@ object InMemoryRepository {
         lists.find { it.id == id }?.let {
             lists.remove(it)
             deletedList = it
+            updateListNames()
         }
     }
 
@@ -30,6 +41,7 @@ object InMemoryRepository {
         deletedList?.let {
             if (it.id == list.id) lists.add(index, it)
             deletedList = null
+            updateListNames()
         }
     }
 
@@ -48,6 +60,7 @@ object InMemoryRepository {
     fun updateName(id: String, name: String) {
         indexOrNull(id)?.let { index ->
             lists[index] = lists[index].copy(name = name)
+            updateListNames()
         }
     }
 
