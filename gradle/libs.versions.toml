@@ -27,6 +27,9 @@ ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "k
 ktor-server-tests = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "material-icons-core" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+sqldelight-android = {module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight"}
+sqldelight-native = {module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight"}
+sqldelight-sqlite = {module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight"}
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

@@ -8,8 +8,7 @@ import dev.hgokhale.lysta.app.NavigationEventBus
 import dev.hgokhale.lysta.app.SnackbarEvent
 import dev.hgokhale.lysta.app.SnackbarEventBus
 import dev.hgokhale.lysta.model.Lyst
-import dev.hgokhale.lysta.model.LystInfo
-import dev.hgokhale.lysta.repository.InMemoryRepository
+import dev.hgokhale.lysta.repository.getRepository
 import dev.hgokhale.lysta.utils.Highlightable
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,23 +23,19 @@ class HomeViewModel() : ViewModel() {
     private val _loaded = MutableStateFlow(false)
     val loaded = _loaded.asStateFlow()
 
-    val repository = InMemoryRepository
+    val repository = getRepository()
     private val _lists: MutableStateFlow<List<UIItem>> = MutableStateFlow(emptyList())
     val lists: StateFlow<List<UIItem>> = _lists.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            repository.listNames.collect { names ->
-                _lists.value = names.map { UIItem(id = it.id, name = it.name) }
-                _loaded.value = true
-            }
-        }
-    }
 
     private val _newItem = MutableSharedFlow<Int>() // index of a newly added item
     val newItem: SharedFlow<Int> get() = _newItem
 
-    private var deletedList: Pair<Int, UIItem>? = null // first = index, second = list
+    private var deletedList: Pair<Int, Lyst>? = null // first = index, second = list
+
+    fun refreshListNames() {
+        _lists.value = repository.getListNames().map { UIItem(id = it.id, name = it.name) }
+        _loaded.value = true
+    }
 
     fun moveList(from: Int, to: Int) {
         if (from != to && from in _lists.value.indices && to in _lists.value.indices) {
@@ -55,7 +50,7 @@ class HomeViewModel() : ViewModel() {
         val lyst = Lyst(name = "New list")
         val newItem = UIItem(lyst.id, lyst.name)
         _lists.value += newItem
-        repository.newList(lyst)
+        repository.addList(lyst)
 
         publishNewItemNotification(newItem)
         viewModelScope.launch {
@@ -74,9 +69,10 @@ class HomeViewModel() : ViewModel() {
             if (index != -1) {
                 val listToDelete = _lists.value[index]
                 _lists.value -= listToDelete
-                repository.deleteList(id)
-
-                deletedList = Pair(index, listToDelete)
+                repository.getList(listId = listToDelete.id)?.let { list ->
+                    repository.deleteList(id)
+                    deletedList = Pair(index, list)
+                }
                 SnackbarEventBus.send(
                     SnackbarEvent(
                         message = "Deleted: ${listToDelete.name}",
@@ -91,10 +87,10 @@ class HomeViewModel() : ViewModel() {
     private fun undeleteList() {
         deletedList
             ?.let { (index, list) ->
-                _lists.value = _lists.value.toMutableList().also { it.add(index, list.apply { showHighlight = true }) }
-                repository.restoreList(index, LystInfo(list.id, list.name))
+                _lists.value = _lists.value.toMutableList().also { it.add(index, UIItem(list.id, list.name, showHighlight = true)) }
+                repository.restoreList(list, index)
                 deletedList = null
-                publishNewItemNotification(list)
+                publishNewItemNotification(lists.value[index])
             }
     }
 

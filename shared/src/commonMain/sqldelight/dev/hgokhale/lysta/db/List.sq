@@ -1,82 +1,55 @@
+import kotlin.Boolean;
+
 CREATE TABLE List (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL ,
     displayIndex INTEGER NOT NULL,
-    isSorted INTEGER NOT NULL,
-    showCheckedItems INTEGER NOT NULL,
-    isDeleted INTEGER NOT NULL
+    sorted INTEGER AS Boolean NOT NULL,
+    showChecked INTEGER AS Boolean NOT NULL
 );
 
-selectAll:
-SELECT * FROM List
-WHERE isDeleted = 0;
+getListNames:
+SELECT id, name FROM List
+ORDER BY displayIndex;
 
-insert:
-INSERT INTO List(name, displayIndex, isSorted, showCheckedItems, isDeleted)
-VALUES ?;
+get:
+SELECT * FROM List
+WHERE id = ?;
+
+newList:
+INSERT INTO List(id, name, displayIndex, sorted, showChecked)
+VALUES (?, ?, (SELECT COUNT(*) FROM List), ?, ?);
 
 updateName:
 UPDATE List
 SET name = ?
 WHERE id = ?;
 
-updateDisplayIndex:
-UPDATE List
-SET displayIndex = ?
-WHERE id = ?;
-
 updateIsSorted:
 UPDATE List
-SET isSorted = ?
+SET sorted = ?
 WHERE id = ?;
 
-updateShowCheckedItems:
+updateShowChecked:
 UPDATE List
-SET showCheckedItems = ?
+SET showChecked = ?
 WHERE id = ?;
 
 delete {
-UPDATE List
-SET isDeleted = 1
-WHERE id = ?;
-
 -- pull items up
 UPDATE List
 SET displayIndex = displayIndex - 1
-WHERE isDeleted = 0
-  AND displayIndex > (SELECT displayIndex FROM List WHERE id = :id);
-}
+WHERE displayIndex > (SELECT displayIndex FROM List WHERE id = :id);
 
-restore {
-UPDATE List
-SET isDeleted = 1
-WHERE id = ?;
-
--- push items down
-UPDATE List
-SET displayIndex = displayIndex + 1
-WHERE isDeleted = 0
-  AND displayIndex >= (SELECT displayIndex FROM List WHERE id = :id);
-}
-
-deleteForever: -- called when the app launches
 DELETE FROM List
-WHERE isDeleted = 1;
+WHERE id = :id;
+}
 
-moveUp {
--- Ensure current_index > new_index, abort the transaction if the condition fails
-SELECT CASE
-    WHEN (SELECT displayIndex FROM List WHERE id = :id) <= :newIndex THEN
-        RAISE(ABORT, 'Transaction aborted: newIndex must be less than current index')
-    ELSE 1
-END;
-
--- 1. Moving UP in the list (current_index > new_index)
+moveUp { -- Moving UP in the list (current_index > new_index)
+-- 1. Move impacted items down
 UPDATE List
 SET displayIndex = displayIndex + 1
-WHERE id = :id
-  AND isDeleted = 0
-  AND displayIndex < (SELECT displayIndex FROM List WHERE id = :id)
+WHERE displayIndex < (SELECT displayIndex FROM List WHERE id = :id)
   AND displayIndex >= :newIndex;
 
 -- 2. Update the displayIndex of the moved item
@@ -85,24 +58,26 @@ SET displayIndex = :newIndex
 WHERE id = :id;
 }
 
-moveDown {
--- Ensure current_index < new_index, abort the transaction if the condition fails
-SELECT CASE
-    WHEN (SELECT displayIndex FROM List WHERE id = :id) >= :newIndex THEN
-        RAISE(ABORT, 'Transaction aborted: newIndex must be greater than current index')
-    ELSE 1
-END;
-
--- 1. Moving DOWN in the list (current_index < new_index)
+moveDown { -- Moving DOWN in the list (current_index < new_index)
+-- 1. Move impacted items up
 UPDATE List
 SET displayIndex = displayIndex - 1
-WHERE id = :id
-  AND isDeleted = 0
-  AND displayIndex > (SELECT displayIndex FROM List WHERE id = :id)
+WHERE displayIndex > (SELECT displayIndex FROM List WHERE id = :id)
   AND displayIndex <= :newIndex;
 
 -- 2. Update the displayIndex of the moved item
 UPDATE List
 SET displayIndex = :newIndex
 WHERE id = :id;
+}
+
+insertAt { -- insert the specified item at a particular displayIndex
+-- 1. move impacted items down
+UPDATE List
+SET displayIndex = displayIndex + 1
+WHERE displayIndex >= :displayIndex;
+
+-- 2. insert item
+INSERT INTO List(id, name, displayIndex, sorted, showChecked)
+VALUES (:id, :name, :displayIndex, :sorted, :showChecked);
 }

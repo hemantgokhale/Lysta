@@ -7,7 +7,7 @@ import dev.hgokhale.lysta.app.SnackbarEvent
 import dev.hgokhale.lysta.app.SnackbarEventBus
 import dev.hgokhale.lysta.app.TopBarAction
 import dev.hgokhale.lysta.model.Lyst
-import dev.hgokhale.lysta.repository.InMemoryRepository
+import dev.hgokhale.lysta.repository.getRepository
 import dev.hgokhale.lysta.utils.Highlightable
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +37,7 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     val loaded = _loaded.asStateFlow()
 
     private val _listNotFound = MutableStateFlow(false)
-    val listNotFound = _listNotFound.asStateFlow() // TODO use this
+    val listNotFound = _listNotFound.asStateFlow() // TODO this can happen for a web app if the user types in an invalid list id
 
     private val _name = MutableStateFlow("")
     val name = _name.asStateFlow()
@@ -49,7 +49,7 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     val showChecked = _showChecked.asStateFlow()
 
     private val _items: MutableStateFlow<List<UIItem>> = MutableStateFlow(emptyList())
-    private val repository = InMemoryRepository
+    private val repository = getRepository()
 
     init {
         viewModelScope.launch {
@@ -154,7 +154,7 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     fun undeleteItem() {
         deletedItem?.let { (index, item) ->
             _items.value = _items.value.toMutableList().apply { add(index, item.apply { showHighlight = true }) }
-            repository.restoreItem(listID, item.id, index)
+            repository.restoreItem(listID, Lyst.Item(description = item.description, checked = item.checked, id = item.id), index)
             publishNewItemNotification(item)
             deletedItem = null
         }
@@ -185,11 +185,18 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     }
 
     fun moveItem(from: Int, to: Int) {
-        if (from != to && from in _items.value.indices && to in _items.value.indices) {
+        if (from != to && from in itemsToRender.value.indices && to in itemsToRender.value.indices) {
+            val fromItem = itemsToRender.value[from]
+            val toItem = itemsToRender.value[to]
+
+            // The actual index may be different from the supplied index if checked items are hidden
+            val actualFromIndex = _items.value.indexOfFirst { it.id == fromItem.id }
+            val actualToIndex = _items.value.indexOfFirst { it.id == toItem.id }
+
             val mutableList = _items.value.toMutableList()
-            mutableList.add(to, mutableList.removeAt(from))
+            mutableList.add(actualToIndex, mutableList.removeAt(actualFromIndex))
             _items.value = mutableList
-            repository.moveItem(listID, _items.value[from].id, from, to)
+            repository.moveItem(listID, fromItem.id, actualFromIndex, actualToIndex)
         }
     }
 

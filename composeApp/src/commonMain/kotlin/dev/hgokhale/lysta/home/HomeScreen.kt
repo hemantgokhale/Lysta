@@ -49,6 +49,10 @@ fun HomeScreen(
     homeViewModel: HomeViewModel = viewModel { HomeViewModel() }
 ) {
     val loaded by homeViewModel.loaded.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        homeViewModel.refreshListNames()
+    }
+
     if (loaded) {
         ConfigureScaffold(scaffoldViewModel = scaffoldViewModel, homeViewModel = homeViewModel)
         Home(homeViewModel = homeViewModel, modifier = modifier)
