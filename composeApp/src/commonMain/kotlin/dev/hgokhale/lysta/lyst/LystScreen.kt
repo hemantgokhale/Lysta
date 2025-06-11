@@ -104,7 +104,13 @@ private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
                         val onDelete = { lystViewModel.deleteItem(item.id) }
                         SwipeToDeleteItem(onDelete = onDelete) {
                             Highlightable(item) { modifier ->
-                                LystItem(lystViewModel = lystViewModel, item = item, onDelete = onDelete, reorderableCollectionItemScope = this, modifier = modifier)
+                                LystItem(
+                                    lystViewModel = lystViewModel,
+                                    item = item,
+                                    onDelete = onDelete,
+                                    reorderableCollectionItemScope = this,
+                                    modifier = modifier
+                                )
                             }
                         }
                     }
@@ -208,11 +214,10 @@ private fun AddItem(lystViewModel: LystViewModel) {
         if (inEditMode) {
             ItemEditor(
                 lystViewModel = lystViewModel,
-                onDone = { description, checked ->
+                onAddItem = { description, checked ->
                     if (description.isNotBlank()) {
                         lystViewModel.addItem(description, checked)
                     }
-                    inEditMode = false
                 },
                 onCancel = { inEditMode = false }
             )
@@ -235,13 +240,18 @@ private fun AddItem(lystViewModel: LystViewModel) {
 @Composable
 private fun ItemEditor(
     lystViewModel: LystViewModel,
-    onDone: (String, Boolean) -> Unit,
+    onAddItem: (String, Boolean) -> Unit,
     onCancel: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf("") }
     var checked by remember { mutableStateOf(false) }
     var autocompleteSuggestions by remember { mutableStateOf(listOf<String>()) }
+    val addItemAndResetTextField: () -> Unit = {
+        onAddItem(text, checked)
+        text = ""
+        focusRequester.requestFocus()
+    }
 
     Row(modifier = Modifier.focusGroup(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
@@ -256,19 +266,20 @@ private fun ItemEditor(
             },
             onSuggestionSelected = {
                 lystViewModel.autocompleteSuggestionSelected(it)
-                onCancel()
+                text = ""
+                focusRequester.requestFocus()
             },
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
             textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onBackground),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
+            keyboardActions = KeyboardActions(onDone = { addItemAndResetTextField() }),
             singleLine = true,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
             suggestions = autocompleteSuggestions
         )
-        IconButton(onClick = { onDone(text, checked) }) {
+        IconButton(onClick = addItemAndResetTextField) {
             Icon(imageVector = Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.onBackground)
         }
         IconButton(onClick = onCancel) {
