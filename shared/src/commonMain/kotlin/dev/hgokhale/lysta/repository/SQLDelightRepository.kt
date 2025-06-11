@@ -42,8 +42,8 @@ class SQLDelightRepository(val db: Database) : LystaRepository {
             db.listQueries.moveUp(allLists[from].id, to.toLong())
     }
 
-    override fun addList(list: Lyst) {
-        db.listQueries.newList(id = list.id, name = list.name, sorted = list.isSorted, showChecked = list.showChecked)
+    override fun addList(lyst: Lyst) {
+        db.listQueries.newList(id = lyst.id, name = lyst.name, sorted = lyst.isSorted, showChecked = lyst.showChecked)
     }
 
     override fun deleteList(listId: String) {
