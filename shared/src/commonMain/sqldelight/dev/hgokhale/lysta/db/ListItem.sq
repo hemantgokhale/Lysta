@@ -6,7 +6,7 @@ CREATE TABLE ListItem (
     description TEXT NOT NULL,
     checked INTEGER AS Boolean NOT NULL,
     displayIndex INTEGER NOT NULL,
-    FOREIGN KEY (listId) REFERENCES List (id)
+    FOREIGN KEY (listId) REFERENCES List (id) ON DELETE CASCADE
 );
 
 selectAll:
@@ -16,7 +16,7 @@ ORDER BY displayIndex;
 
 insert:
 INSERT INTO ListItem(id, listId, description, checked, displayIndex)
-VALUES (?, ?, ?, ?, (SELECT count(*) FROM ListItem));
+VALUES (:id, :listId, :description, :checked, (SELECT count(*) FROM ListItem WHERE listId = :listId));
 
 updateDescription:
 UPDATE ListItem

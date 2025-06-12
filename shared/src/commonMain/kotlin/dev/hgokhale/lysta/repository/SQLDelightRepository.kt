@@ -58,6 +58,9 @@ class SQLDelightRepository(val db: Database) : LystaRepository {
             sorted = list.isSorted,
             showChecked = list.showChecked,
         )
+        list.items.forEachIndexed { index, item ->
+            db.listItemQueries.insert(id = item.id, listId = list.id, description = item.description, checked = item.checked)
+        }
     }
 
     override fun updateShowChecked(listId: String, showChecked: Boolean) {
