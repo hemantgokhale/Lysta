@@ -109,6 +109,7 @@ private fun HomeItem(
     modifier: Modifier = Modifier,
 ) {
     val isMobile = remember { getPlatform().isMobile }
+    val lists by homeViewModel.lists.collectAsStateWithLifecycle()
     var isHovered by remember { mutableStateOf(false) }
 
     Row(
@@ -139,12 +140,14 @@ private fun HomeItem(
                 )
             }
         }
-        IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_drag_handle),
-                contentDescription = "Move item",
-                tint = MaterialTheme.colorScheme.onSecondary,
-            )
+        if (lists.size > 1) {
+            IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_drag_handle),
+                    contentDescription = "Move item",
+                    tint = MaterialTheme.colorScheme.onSecondary,
+                )
+            }
         }
     }
 }

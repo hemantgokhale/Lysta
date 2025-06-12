@@ -131,10 +131,13 @@ private fun LystItem(
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
-    var description by remember { mutableStateOf(item.description) }
-    val listIsSorted by lystViewModel.sorted.collectAsStateWithLifecycle()
-    var isHovered by remember { mutableStateOf(false) }
+
     val isMobile = remember { getPlatform().isMobile }
+    val items by lystViewModel.itemsToRender.collectAsStateWithLifecycle()
+    val listIsSorted by lystViewModel.sorted.collectAsStateWithLifecycle()
+
+    var description by remember { mutableStateOf(item.description) }
+    var isHovered by remember { mutableStateOf(false) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -196,7 +199,7 @@ private fun LystItem(
                 )
             }
         }
-        if (!listIsSorted) {
+        if (!listIsSorted && items.size > 1) {
             IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_drag_handle),
