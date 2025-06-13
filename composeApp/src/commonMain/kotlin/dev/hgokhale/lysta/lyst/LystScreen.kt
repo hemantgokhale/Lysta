@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -199,8 +200,15 @@ private fun LystItem(
                 )
             }
         }
-        if (!listIsSorted && items.size > 1) {
-            IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
+        if (!listIsSorted) {
+            IconButton(
+                onClick = { },
+                modifier = with(reorderableCollectionItemScope) {
+                    Modifier
+                        .draggableHandle()
+                        .alpha(if (items.size > 1) 1f else 0f)
+                }
+            ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_drag_handle),
                     contentDescription = "Move item",

@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -140,14 +141,19 @@ private fun HomeItem(
                 )
             }
         }
-        if (lists.size > 1) {
-            IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_drag_handle),
-                    contentDescription = "Move item",
-                    tint = MaterialTheme.colorScheme.onSecondary,
-                )
+        IconButton(
+            onClick = { },
+            modifier = with(reorderableCollectionItemScope) {
+                Modifier.draggableHandle()
+                    .alpha(if (lists.size > 1) 1f else 0f)
             }
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_drag_handle),
+                contentDescription = "Move item",
+                tint = MaterialTheme.colorScheme.onSecondary,
+            )
         }
+
     }
 }
