@@ -2,39 +2,31 @@ package dev.hgokhale.lysta.repository
 
 import dev.hgokhale.lysta.model.Lyst
 import dev.hgokhale.lysta.model.LystInfo
-import kotlinx.coroutines.flow.MutableStateFlow
 
 object InMemoryRepository : LystaRepository {
     private val lists: MutableList<Lyst> = exampleLists
-    private val _listNames = MutableStateFlow<List<LystInfo>>(lists.map { LystInfo(it.name, it.id) })
 
-    override fun getListNames(): List<LystInfo> = _listNames.value
+    override fun getListNames(): List<LystInfo> = lists.map { LystInfo(it.name, it.id) }
 
     override fun getList(listId: String): Lyst? = lists.find { it.id == listId }
 
     override fun moveList(from: Int, to: Int) {
         if (from != to && from in lists.indices && to in lists.indices) {
             lists.add(to, lists.removeAt(from))
-            updateListNames()
         }
-    }
-
-    private fun updateListNames() {
-        _listNames.value = lists.map { LystInfo(it.name, it.id) }
     }
 
     override fun addList(lyst: Lyst) {
         lists.add(lyst)
     }
 
+
     override fun deleteList(listId: String) {
         lists.removeAll { it.id == listId }
-        updateListNames()
     }
 
     override fun restoreList(list: Lyst, displayIndex: Int) {
         lists.add(displayIndex, list)
-        updateListNames()
     }
 
     override fun updateShowChecked(listId: String, showChecked: Boolean) {
@@ -52,7 +44,6 @@ object InMemoryRepository : LystaRepository {
     override fun updateName(listId: String, name: String) {
         lists.indexOfFirstOrNull { it.id == listId }?.let { index ->
             lists[index] = lists[index].copy(name = name)
-            updateListNames()
         }
     }
 
@@ -77,28 +68,22 @@ object InMemoryRepository : LystaRepository {
         }
     }
 
-    override fun updateItemDescription(listId: String, itemId: String, description: String) {
+    private fun updateItem(listId: String, itemId: String, update: (Lyst.Item) -> Lyst.Item) {
         lists.indexOfFirstOrNull { it.id == listId }?.let { listIndex ->
             lists[listIndex].items.indexOfFirstOrNull { it.id == itemId }?.let { itemIndex ->
-                lists[listIndex] = lists[listIndex].copy(
-                    items = lists[listIndex].items.mapIndexed { itemIndex, item ->
-                        if (itemIndex == itemIndex) item.copy(description = description) else item
-                    }
-                )
+                val updatedItem = update(lists[listIndex].items[itemIndex])
+                val newItems = lists[listIndex].items.toMutableList().also { it[itemIndex] = updatedItem }
+                lists[listIndex] = lists[listIndex].copy(items = newItems)
             }
         }
     }
 
+    override fun updateItemDescription(listId: String, itemId: String, description: String) {
+        updateItem(listId, itemId) { it.copy(description = description) }
+    }
+
     override fun updateItemChecked(listId: String, itemId: String, checked: Boolean) {
-        lists.indexOfFirstOrNull { it.id == listId }?.let { listIndex ->
-            lists[listIndex].items.indexOfFirstOrNull { it.id == itemId }?.let { itemIndex ->
-                lists[listIndex] = lists[listIndex].copy(
-                    items = lists[listIndex].items.mapIndexed { itemIndex, item ->
-                        if (itemIndex == itemIndex) item.copy(checked = checked) else item
-                    }
-                )
-            }
-        }
+        updateItem(listId, itemId) { it.copy(checked = checked) }
     }
 
     override fun moveItem(listId: String, itemId: String, from: Int, to: Int) {
