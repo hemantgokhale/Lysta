@@ -1,6 +1,7 @@
 package dev.hgokhale.lysta.lyst
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Column
@@ -97,7 +98,7 @@ private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
 
     ScrollToNewItemEffect(lystViewModel.newItem, lazyListState)
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
         LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
             items(items = itemsToRender, key = { item -> item.id }) { item ->
                 ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
