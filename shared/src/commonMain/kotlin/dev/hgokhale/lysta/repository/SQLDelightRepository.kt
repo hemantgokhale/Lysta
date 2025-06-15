@@ -5,17 +5,6 @@ import dev.hgokhale.lysta.model.Lyst
 import dev.hgokhale.lysta.model.LystInfo
 
 class SQLDelightRepository(val db: Database) : LystaRepository {
-    init {
-        // This is just for testing...
-        if (getListNames().isEmpty()) {
-            exampleLists.forEach { list ->
-                addList(list)
-                list.items.forEach { item ->
-                    addItem(list.id, item)
-                }
-            }
-        }
-    }
 
     override fun getListNames(): List<LystInfo> =
         db.listQueries.getListNames().executeAsList().map { LystInfo(it.name, it.id) }
@@ -44,6 +33,7 @@ class SQLDelightRepository(val db: Database) : LystaRepository {
 
     override fun addList(lyst: Lyst) {
         db.listQueries.newList(id = lyst.id, name = lyst.name, sorted = lyst.isSorted, showChecked = lyst.showChecked)
+        lyst.items.forEach { addItem(lyst.id, it) }
     }
 
     override fun deleteList(listId: String) {
