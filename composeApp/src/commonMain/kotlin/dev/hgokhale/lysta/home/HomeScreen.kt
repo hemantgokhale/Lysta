@@ -47,7 +47,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 fun HomeScreen(
     scaffoldViewModel: ScaffoldViewModel,
     modifier: Modifier = Modifier,
-    homeViewModel: HomeViewModel = viewModel { HomeViewModel() }
+    homeViewModel: HomeViewModel = viewModel { HomeViewModel(scaffoldViewModel) }
 ) {
     val loaded by homeViewModel.loaded.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {

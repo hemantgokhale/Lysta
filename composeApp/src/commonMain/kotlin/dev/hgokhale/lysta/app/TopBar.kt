@@ -33,7 +33,7 @@ fun TopBar(viewModel: ScaffoldViewModel) {
             val showBackButton by viewModel.showBackButton.collectAsStateWithLifecycle()
             val scope = rememberCoroutineScope()
             if (showBackButton) {
-                IconButton(onClick = { scope.launch { NavigationEventBus.send(NavigationEvent.NavigateBack) } }) {
+                IconButton(onClick = { scope.launch { viewModel.navigationEvents.send(NavigationEvent.NavigateBack) } }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             }

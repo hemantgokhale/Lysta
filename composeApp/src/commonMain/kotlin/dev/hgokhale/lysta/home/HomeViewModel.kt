@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hgokhale.lysta.app.NavigationDestination
 import dev.hgokhale.lysta.app.NavigationEvent
-import dev.hgokhale.lysta.app.NavigationEventBus
+import dev.hgokhale.lysta.app.ScaffoldViewModel
 import dev.hgokhale.lysta.app.SnackbarEvent
 import dev.hgokhale.lysta.app.SnackbarEventBus
 import dev.hgokhale.lysta.model.Lyst
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HomeViewModel() : ViewModel() {
+class HomeViewModel(val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
     data class UIItem(val id: String, val name: String, override var showHighlight: Boolean = false) : Highlightable
 
     private val _loaded = MutableStateFlow(false)
@@ -54,13 +54,13 @@ class HomeViewModel() : ViewModel() {
 
         publishNewItemNotification(newItem)
         viewModelScope.launch {
-            NavigationEventBus.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(lyst.id)))
+            scaffoldViewModel.navigationEvents.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(lyst.id)))
         }
         return lyst.id
     }
 
     fun onListClicked(id: String) {
-        viewModelScope.launch { NavigationEventBus.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(id))) }
+        viewModelScope.launch { scaffoldViewModel.navigationEvents.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(id))) }
     }
 
     fun deleteList(id: String) {

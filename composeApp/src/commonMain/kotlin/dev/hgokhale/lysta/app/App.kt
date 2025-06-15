@@ -31,7 +31,7 @@ fun App(navController: NavHostController = rememberNavController(), scaffoldView
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
-        for (event in NavigationEventBus.events) {
+        for (event in scaffoldViewModel.navigationEvents) {
             // If the user chooses to navigate away when a snackbar is showing, dismiss the snackbar.
             snackbarHostState.currentSnackbarData?.dismiss()
             when (event) {
