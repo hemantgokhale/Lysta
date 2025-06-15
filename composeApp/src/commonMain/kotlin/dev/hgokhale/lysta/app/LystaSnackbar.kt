@@ -20,8 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
 
 @Composable
 fun LystaSnackbar(data: SnackbarData) {
@@ -59,16 +57,5 @@ fun LystaSnackbar(data: SnackbarData) {
                 }
             }
         }
-    }
-}
-
-data class SnackbarEvent(val message: String, val actionLabel: String, val action: (() -> Unit)? = null)
-
-object SnackbarEventBus {
-    private val _events = Channel<SnackbarEvent>(capacity = Channel.CONFLATED)
-    val events: ReceiveChannel<SnackbarEvent> = _events
-
-    suspend fun send(event: SnackbarEvent) {
-        _events.send(event)
     }
 }

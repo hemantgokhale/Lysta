@@ -42,7 +42,7 @@ fun App(navController: NavHostController = rememberNavController(), scaffoldView
     }
 
     LaunchedEffect(Unit) {
-        for (event in SnackbarEventBus.events) {
+        for (event in scaffoldViewModel.snackbarEvents) {
             launch {
                 // We show a snackbar to give the user an opportunity to undo an accidental delete. Given that,
                 // we don't allow a queue of snackbars to build up. If the user proceeds to delete multiple items

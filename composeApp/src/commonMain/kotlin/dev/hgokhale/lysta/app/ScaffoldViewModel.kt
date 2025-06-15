@@ -17,6 +17,8 @@ sealed interface NavigationEvent {
     data object NavigateBack : NavigationEvent
 }
 
+data class SnackbarEvent(val message: String, val actionLabel: String, val action: (() -> Unit)? = null)
+
 class ScaffoldViewModel : ViewModel() {
     // TopBar
     val topBarTitle = MutableStateFlow("")
@@ -24,6 +26,7 @@ class ScaffoldViewModel : ViewModel() {
     val showBackButton: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val topBarActions: MutableStateFlow<List<TopBarAction>> = MutableStateFlow(emptyList())
 
-    val navigationEvents = Channel<NavigationEvent>(capacity = Channel.CONFLATED)
     val fabAction: MutableStateFlow<(() -> Unit)?> = MutableStateFlow(null)
+    val snackbarEvents = Channel<SnackbarEvent>(capacity = Channel.CONFLATED)
+    val navigationEvents = Channel<NavigationEvent>(capacity = Channel.CONFLATED)
 }

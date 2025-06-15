@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hgokhale.lysta.app.ScaffoldViewModel
 import dev.hgokhale.lysta.app.SnackbarEvent
-import dev.hgokhale.lysta.app.SnackbarEventBus
 import dev.hgokhale.lysta.app.TopBarAction
 import dev.hgokhale.lysta.model.Lyst
 import dev.hgokhale.lysta.repository.getRepository
@@ -140,7 +139,7 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
                 repository.deleteItem(listID, itemId)
                 deletedItem = Pair(index, itemToDelete)
 
-                SnackbarEventBus.send(
+                scaffoldViewModel.snackbarEvents.send(
                     SnackbarEvent(
                         message = "Deleted: ${itemToDelete.description}",
                         actionLabel = "Undo",

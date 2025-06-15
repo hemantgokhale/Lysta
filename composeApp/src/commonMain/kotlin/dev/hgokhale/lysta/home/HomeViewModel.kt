@@ -6,7 +6,6 @@ import dev.hgokhale.lysta.app.NavigationDestination
 import dev.hgokhale.lysta.app.NavigationEvent
 import dev.hgokhale.lysta.app.ScaffoldViewModel
 import dev.hgokhale.lysta.app.SnackbarEvent
-import dev.hgokhale.lysta.app.SnackbarEventBus
 import dev.hgokhale.lysta.model.Lyst
 import dev.hgokhale.lysta.repository.getRepository
 import dev.hgokhale.lysta.utils.Highlightable
@@ -73,7 +72,7 @@ class HomeViewModel(val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
                     repository.deleteList(id)
                     deletedList = Pair(index, list)
                 }
-                SnackbarEventBus.send(
+                scaffoldViewModel.snackbarEvents.send(
                     SnackbarEvent(
                         message = "Deleted: ${listToDelete.name}",
                         actionLabel = "Undo",
