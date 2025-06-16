@@ -6,6 +6,7 @@ import androidx.compose.ui.window.ComposeViewport
 import androidx.navigation.ExperimentalBrowserHistoryApi
 import androidx.navigation.bindToNavigation
 import androidx.navigation.compose.rememberNavController
+import dev.hgokhale.lysta.app.App
 import kotlinx.browser.document
 import kotlinx.browser.window
 

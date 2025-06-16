@@ -1,0 +1,83 @@
+import kotlin.Boolean;
+
+CREATE TABLE List (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL ,
+    displayIndex INTEGER NOT NULL,
+    sorted INTEGER AS Boolean NOT NULL,
+    showChecked INTEGER AS Boolean NOT NULL
+);
+
+getListNames:
+SELECT id, name FROM List
+ORDER BY displayIndex;
+
+get:
+SELECT * FROM List
+WHERE id = ?;
+
+newList:
+INSERT INTO List(id, name, displayIndex, sorted, showChecked)
+VALUES (?, ?, (SELECT COUNT(*) FROM List), ?, ?);
+
+updateName:
+UPDATE List
+SET name = ?
+WHERE id = ?;
+
+updateIsSorted:
+UPDATE List
+SET sorted = ?
+WHERE id = ?;
+
+updateShowChecked:
+UPDATE List
+SET showChecked = ?
+WHERE id = ?;
+
+delete {
+-- pull items up
+UPDATE List
+SET displayIndex = displayIndex - 1
+WHERE displayIndex > (SELECT displayIndex FROM List WHERE id = :id);
+
+DELETE FROM List
+WHERE id = :id;
+}
+
+moveUp { -- Moving UP in the list (current_index > new_index)
+-- 1. Move impacted items down
+UPDATE List
+SET displayIndex = displayIndex + 1
+WHERE displayIndex < (SELECT displayIndex FROM List WHERE id = :id)
+  AND displayIndex >= :newIndex;
+
+-- 2. Update the displayIndex of the moved item
+UPDATE List
+SET displayIndex = :newIndex
+WHERE id = :id;
+}
+
+moveDown { -- Moving DOWN in the list (current_index < new_index)
+-- 1. Move impacted items up
+UPDATE List
+SET displayIndex = displayIndex - 1
+WHERE displayIndex > (SELECT displayIndex FROM List WHERE id = :id)
+  AND displayIndex <= :newIndex;
+
+-- 2. Update the displayIndex of the moved item
+UPDATE List
+SET displayIndex = :newIndex
+WHERE id = :id;
+}
+
+insertAt { -- insert the specified item at a particular displayIndex
+-- 1. move impacted items down
+UPDATE List
+SET displayIndex = displayIndex + 1
+WHERE displayIndex >= :displayIndex;
+
+-- 2. insert item
+INSERT INTO List(id, name, displayIndex, sorted, showChecked)
+VALUES (:id, :name, :displayIndex, :sorted, :showChecked);
+}

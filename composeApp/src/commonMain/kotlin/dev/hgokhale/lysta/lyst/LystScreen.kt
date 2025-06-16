@@ -1,6 +1,7 @@
-package dev.hgokhale.lysta
+package dev.hgokhale.lysta.lyst
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -41,8 +43,17 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.hgokhale.lysta.app.ScaffoldViewModel
+import dev.hgokhale.lysta.getPlatform
+import dev.hgokhale.lysta.utils.AutoCompleteTextField
+import dev.hgokhale.lysta.utils.Highlightable
+import dev.hgokhale.lysta.utils.LoadingIndicator
+import dev.hgokhale.lysta.utils.ScrollToNewItemEffect
+import dev.hgokhale.lysta.utils.SwipeToDeleteItem
 import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_drag_handle
 import org.jetbrains.compose.resources.painterResource
@@ -51,59 +62,84 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
-fun LystScreen(listId: String, modifier: Modifier = Modifier, viewModel: LystViewModel) {
-    LaunchedEffect(listId) { viewModel.loadList(listId) }
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    (uiState as? LystViewModel.UIState.Lyst)
-        ?.lyst
-        ?.let { Lyst(viewModel = viewModel, list = it, modifier = modifier) }
-        ?: LoadingIndicator(modifier = modifier)
+fun LystScreen(
+    listId: String,
+    scaffoldViewModel: ScaffoldViewModel,
+    modifier: Modifier = Modifier,
+    lystViewModel: LystViewModel = viewModel { LystViewModel(listID = listId, scaffoldViewModel = scaffoldViewModel) }
+) {
+    val listLoaded by lystViewModel.loaded.collectAsStateWithLifecycle()
+    if (!listLoaded) {
+        LoadingIndicator(modifier = modifier)
+    } else {
+        ConfigureScaffold(scaffoldViewModel = scaffoldViewModel, lystViewModel = lystViewModel)
+        Lyst(lystViewModel = lystViewModel, modifier = modifier)
+    }
 }
 
 @Composable
-private fun Lyst(viewModel: LystViewModel, list: Lyst, modifier: Modifier = Modifier) {
-    val itemsToRender by list.itemsToRender.collectAsStateWithLifecycle()
+private fun ConfigureScaffold(scaffoldViewModel: ScaffoldViewModel, lystViewModel: LystViewModel) {
+    LaunchedEffect(Unit) {
+        scaffoldViewModel.topBarTitle.value = lystViewModel.name.value
+        scaffoldViewModel.onTitleChange.value = { lystViewModel.onNameChanged(it) }
+        scaffoldViewModel.showBackButton.value = true
+        scaffoldViewModel.fabAction.value = null
+        lystViewModel.setTopBarActions()
+    }
+}
+
+@Composable
+private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
+    val itemsToRender by lystViewModel.itemsToRender.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        list.moveItem(from.index, to.index)
+        lystViewModel.moveItem(from.index, to.index)
     }
 
-    ScrollToNewItemEffect(list.newItem, lazyListState)
+    ScrollToNewItemEffect(lystViewModel.newItem, lazyListState)
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
         LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
             items(items = itemsToRender, key = { item -> item.id }) { item ->
                 ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
                     val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
                     Surface(shadowElevation = elevation) {
-                        val onDelete = { viewModel.deleteItem(list.id, item.id) }
+                        val onDelete = { lystViewModel.deleteItem(item.id) }
                         SwipeToDeleteItem(onDelete = onDelete) {
                             Highlightable(item) { modifier ->
-                                LystItem(list = list, item = item, onDelete = onDelete, reorderableCollectionItemScope = this, modifier = modifier)
+                                LystItem(
+                                    lystViewModel = lystViewModel,
+                                    item = item,
+                                    onDelete = onDelete,
+                                    reorderableCollectionItemScope = this,
+                                    modifier = modifier
+                                )
                             }
                         }
                     }
                 }
             }
         }
-        AddItem(list)
+        AddItem(lystViewModel)
     }
 }
 
 @Composable
 private fun LystItem(
-    list: Lyst,
-    item: Lyst.Item,
+    lystViewModel: LystViewModel,
+    item: LystViewModel.UIItem,
     onDelete: () -> Unit,
     reorderableCollectionItemScope: ReorderableCollectionItemScope,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
-    var description by remember { mutableStateOf(item.description) }
-    val listIsSorted by list.sorted.collectAsStateWithLifecycle()
-    var isHovered by remember { mutableStateOf(false) }
+
     val isMobile = remember { getPlatform().isMobile }
+    val items by lystViewModel.itemsToRender.collectAsStateWithLifecycle()
+    val listIsSorted by lystViewModel.sorted.collectAsStateWithLifecycle()
+
+    var description by remember { mutableStateOf(item.description) }
+    var isHovered by remember { mutableStateOf(false) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -122,7 +158,7 @@ private fun LystItem(
     ) {
         Checkbox(
             checked = item.checked,
-            onCheckedChange = { list.onItemCheckedChanged(itemId = item.id, isChecked = it) },
+            onCheckedChange = { lystViewModel.onItemCheckedChanged(itemId = item.id, isChecked = it) },
             colors = CheckboxColors(
                 checkedCheckmarkColor = MaterialTheme.colorScheme.onSecondary,
                 uncheckedCheckmarkColor = MaterialTheme.colorScheme.background,
@@ -145,7 +181,7 @@ private fun LystItem(
                 .weight(1f)
                 .onFocusChanged { focusState ->
                     if (!focusState.isFocused) {
-                        list.onItemDescriptionChanged(itemId = item.id, description = description)
+                        lystViewModel.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
             textStyle = LocalTextStyle.current.copy(
@@ -166,7 +202,14 @@ private fun LystItem(
             }
         }
         if (!listIsSorted) {
-            IconButton(onClick = { }, modifier = with(reorderableCollectionItemScope) { Modifier.draggableHandle() }) {
+            IconButton(
+                onClick = { },
+                modifier = with(reorderableCollectionItemScope) {
+                    Modifier
+                        .draggableHandle()
+                        .alpha(if (items.size > 1) 1f else 0f)
+                }
+            ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_drag_handle),
                     contentDescription = "Move item",
@@ -178,17 +221,16 @@ private fun LystItem(
 }
 
 @Composable
-private fun AddItem(list: Lyst) {
+private fun AddItem(lystViewModel: LystViewModel) {
     var inEditMode by remember { mutableStateOf(false) }
     Row(modifier = Modifier.onFocusChanged { inEditMode = it.hasFocus }) {
         if (inEditMode) {
             ItemEditor(
-                list = list,
-                onDone = { description, checked ->
+                lystViewModel = lystViewModel,
+                onAddItem = { description, checked ->
                     if (description.isNotBlank()) {
-                        list.addItem(description, checked)
+                        lystViewModel.addItem(description, checked)
                     }
-                    inEditMode = false
                 },
                 onCancel = { inEditMode = false }
             )
@@ -210,14 +252,19 @@ private fun AddItem(list: Lyst) {
 
 @Composable
 private fun ItemEditor(
-    list: Lyst,
-    onDone: (String, Boolean) -> Unit,
+    lystViewModel: LystViewModel,
+    onAddItem: (String, Boolean) -> Unit,
     onCancel: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf("") }
     var checked by remember { mutableStateOf(false) }
     var autocompleteSuggestions by remember { mutableStateOf(listOf<String>()) }
+    val addItemAndResetTextField: () -> Unit = {
+        onAddItem(text, checked)
+        text = ""
+        focusRequester.requestFocus()
+    }
 
     Row(modifier = Modifier.focusGroup(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
@@ -228,23 +275,24 @@ private fun ItemEditor(
             value = text,
             onValueChange = {
                 text = it
-                autocompleteSuggestions = list.getAutocompleteSuggestions(query = it)
+                autocompleteSuggestions = lystViewModel.getAutocompleteSuggestions(query = it)
             },
             onSuggestionSelected = {
-                list.autocompleteSuggestionSelected(it)
-                onCancel()
+                lystViewModel.autocompleteSuggestionSelected(it)
+                text = ""
+                focusRequester.requestFocus()
             },
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
             textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onBackground),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onDone(text, checked) }),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { addItemAndResetTextField() }),
             singleLine = true,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
             suggestions = autocompleteSuggestions
         )
-        IconButton(onClick = { onDone(text, checked) }) {
+        IconButton(onClick = addItemAndResetTextField) {
             Icon(imageVector = Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.onBackground)
         }
         IconButton(onClick = onCancel) {

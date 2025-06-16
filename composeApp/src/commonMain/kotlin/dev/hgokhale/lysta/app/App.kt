@@ -1,4 +1,4 @@
-package dev.hgokhale.lysta
+package dev.hgokhale.lysta.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -25,24 +25,24 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 
+
 @Composable
-fun App(navController: NavHostController = rememberNavController(), viewModel: LystViewModel = viewModel { LystViewModel() }) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+fun App(navController: NavHostController = rememberNavController(), scaffoldViewModel: ScaffoldViewModel = viewModel { ScaffoldViewModel() }) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
-        for (event in viewModel.navigationEvents) {
+        for (event in scaffoldViewModel.navigationEvents) {
             // If the user chooses to navigate away when a snackbar is showing, dismiss the snackbar.
             snackbarHostState.currentSnackbarData?.dismiss()
             when (event) {
-                is LystViewModel.NavigationEvent.Navigate -> navController.navigate(event.route)
-                is LystViewModel.NavigationEvent.NavigateBack -> navController.popBackStack()
+                is NavigationEvent.Navigate -> navController.navigate(event.route)
+                is NavigationEvent.NavigateBack -> navController.popBackStack()
             }
         }
     }
 
     LaunchedEffect(Unit) {
-        for (event in viewModel.snackbarEvents) {
+        for (event in scaffoldViewModel.snackbarEvents) {
             launch {
                 // We show a snackbar to give the user an opportunity to undo an accidental delete. Given that,
                 // we don't allow a queue of snackbars to build up. If the user proceeds to delete multiple items
@@ -67,16 +67,17 @@ fun App(navController: NavHostController = rememberNavController(), viewModel: L
             modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.inverseSurface),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val fabAction by scaffoldViewModel.fabAction.collectAsStateWithLifecycle()
             val primaryTextStyle = MaterialTheme.typography.bodyLarge
             val maxWidth = primaryTextStyle.fontSize.value.dp * 40 // enough space to fit ~80 chars
             CompositionLocalProvider(LocalTextStyle provides primaryTextStyle) {
                 Scaffold(
                     modifier = Modifier.widthIn(max = maxWidth),
-                    topBar = { TopBar(viewModel = viewModel) },
+                    topBar = { TopBar(viewModel = scaffoldViewModel) },
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { LystaSnackbar(it) }) },
-                    floatingActionButton = { if (uiState.showFAB) DraggableFAB { viewModel.onFabClicked() } },
+                    floatingActionButton = { fabAction?.let { DraggableFAB { it() } } },
                 ) { paddingValues ->
-                    NavGraph(paddingValues, navController, viewModel)
+                    NavGraph(paddingValues, navController, scaffoldViewModel)
                 }
             }
         }

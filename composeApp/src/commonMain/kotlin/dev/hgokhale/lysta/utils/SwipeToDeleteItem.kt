@@ -1,4 +1,4 @@
-package dev.hgokhale.lysta
+package dev.hgokhale.lysta.utils
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
