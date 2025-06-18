@@ -25,22 +25,21 @@ import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(viewModel: ScaffoldViewModel) {
+fun TopBar(scaffoldViewModel: ScaffoldViewModel) {
+    val topBarState by scaffoldViewModel.topBarState.collectAsStateWithLifecycle()
 
     TopAppBar(
-        title = { TopBarTitle(viewModel = viewModel) },
+        title = { TopBarTitle(topBarState = topBarState) },
         navigationIcon = {
-            val showBackButton by viewModel.showBackButton.collectAsStateWithLifecycle()
             val scope = rememberCoroutineScope()
-            if (showBackButton) {
-                IconButton(onClick = { scope.launch { viewModel.navigationEvents.send(NavigationEvent.NavigateBack) } }) {
+            if (topBarState.showBackButton) {
+                IconButton(onClick = { scope.launch { scaffoldViewModel.navigateBack() } }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             }
         },
         actions = {
-            val actions by viewModel.topBarActions.collectAsStateWithLifecycle()
-            actions.forEach { action ->
+            topBarState.actions.forEach { action ->
                 IconButton(onClick = action.onClick) {
                     Icon(
                         painter = painterResource(action.icon),
@@ -54,10 +53,10 @@ fun TopBar(viewModel: ScaffoldViewModel) {
 }
 
 @Composable
-private fun TopBarTitle(viewModel: ScaffoldViewModel) {
+private fun TopBarTitle(topBarState: TopBarState) {
     val textStyle = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onBackground)
-    val title by viewModel.topBarTitle.collectAsStateWithLifecycle()
-    val onTitleChange by viewModel.onTitleChange.collectAsStateWithLifecycle()
+    val title = topBarState.title
+    val onTitleChange = topBarState.onTitleChange
 
     onTitleChange
         ?.let { LystTitle(title = title, onTitleChange = it, textStyle = textStyle) }

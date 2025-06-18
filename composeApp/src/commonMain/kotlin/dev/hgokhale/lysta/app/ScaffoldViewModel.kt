@@ -1,8 +1,11 @@
 package dev.hgokhale.lysta.app
 
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import org.jetbrains.compose.resources.DrawableResource
 
 data class TopBarAction(
@@ -12,21 +15,65 @@ data class TopBarAction(
     val onClick: () -> Unit,
 )
 
-sealed interface NavigationEvent {
-    data class Navigate(val route: String) : NavigationEvent
-    data object NavigateBack : NavigationEvent
+sealed interface UiEvent {
+    sealed interface Navigation : UiEvent {
+        data class Navigate(val route: String) : Navigation
+        data object NavigateBack : Navigation
+    }
+
+    data class Snackbar(
+        val message: String,
+        val actionLabel: String,
+        val action: (() -> Unit)? = null
+    ) : UiEvent
 }
 
-data class SnackbarEvent(val message: String, val actionLabel: String, val action: (() -> Unit)? = null)
+data class TopBarState(
+    val title: String = "",
+    val onTitleChange: ((String) -> Unit)? = null,
+    val showBackButton: Boolean = false,
+    val actions: List<TopBarAction> = emptyList()
+)
 
 class ScaffoldViewModel : ViewModel() {
-    // TopBar
-    val topBarTitle = MutableStateFlow("")
-    val onTitleChange: MutableStateFlow<((String) -> Unit)?> = MutableStateFlow(null)
-    val showBackButton: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val topBarActions: MutableStateFlow<List<TopBarAction>> = MutableStateFlow(emptyList())
+    private val _topBarState = MutableStateFlow(TopBarState())
+    val topBarState = _topBarState.asStateFlow()
 
-    val fabAction: MutableStateFlow<(() -> Unit)?> = MutableStateFlow(null)
-    val snackbarEvents = Channel<SnackbarEvent>(capacity = Channel.CONFLATED)
-    val navigationEvents = Channel<NavigationEvent>(capacity = Channel.CONFLATED)
+    private val _fabAction = MutableStateFlow<(() -> Unit)?>(null)
+    val fabAction = _fabAction.asStateFlow()
+
+    private val _uiEvents = MutableSharedFlow<UiEvent>()
+    val uiEvents = _uiEvents.asSharedFlow()
+
+    fun updateTopBarTitle(title: String) {
+        _topBarState.update { it.copy(title = title) }
+    }
+
+    fun setTopBarActions(actions: List<TopBarAction>) {
+        _topBarState.update { it.copy(actions = actions) }
+    }
+
+    fun setOnTitleChange(onTitleChange: ((String) -> Unit)?) {
+        _topBarState.update { it.copy(onTitleChange = onTitleChange) }
+    }
+
+    fun setFabAction(action: (() -> Unit)?) {
+        _fabAction.update { action }
+    }
+
+    fun showBackButton(show: Boolean) {
+        _topBarState.update { it.copy(showBackButton = show) }
+    }
+
+    suspend fun showSnackbar(message: String, actionLabel: String, action: (() -> Unit)? = null) {
+        _uiEvents.emit(UiEvent.Snackbar(message, actionLabel, action))
+    }
+
+    suspend fun navigate(route: String) {
+        _uiEvents.emit(UiEvent.Navigation.Navigate(route))
+    }
+
+    suspend fun navigateBack() {
+        _uiEvents.emit(UiEvent.Navigation.NavigateBack)
+    }
 }

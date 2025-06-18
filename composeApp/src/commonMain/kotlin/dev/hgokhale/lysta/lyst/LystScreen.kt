@@ -80,10 +80,10 @@ fun LystScreen(
 @Composable
 private fun ConfigureScaffold(scaffoldViewModel: ScaffoldViewModel, lystViewModel: LystViewModel) {
     LaunchedEffect(Unit) {
-        scaffoldViewModel.topBarTitle.value = lystViewModel.name.value
-        scaffoldViewModel.onTitleChange.value = { lystViewModel.onNameChanged(it) }
-        scaffoldViewModel.showBackButton.value = true
-        scaffoldViewModel.fabAction.value = null
+        scaffoldViewModel.updateTopBarTitle(lystViewModel.name.value)
+        scaffoldViewModel.setOnTitleChange { lystViewModel.onNameChanged(name = it) }
+        scaffoldViewModel.showBackButton(true)
+        scaffoldViewModel.setFabAction(null)
         lystViewModel.setTopBarActions()
     }
 }

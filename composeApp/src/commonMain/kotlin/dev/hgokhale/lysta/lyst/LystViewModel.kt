@@ -3,7 +3,6 @@ package dev.hgokhale.lysta.lyst
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hgokhale.lysta.app.ScaffoldViewModel
-import dev.hgokhale.lysta.app.SnackbarEvent
 import dev.hgokhale.lysta.app.TopBarAction
 import dev.hgokhale.lysta.model.Lyst
 import dev.hgokhale.lysta.repository.getRepository
@@ -80,18 +79,20 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     private var deletedItem: Pair<Int, UIItem>? = null // first = index, second = item
 
     fun setTopBarActions() {
-        scaffoldViewModel.topBarActions.value = listOf(
-            TopBarAction(
-                contentDescription = if (showChecked.value) "Show checked items" else "Hide checked items",
-                icon = Res.drawable.ic_check_box,
-                isOn = showChecked.value,
-                onClick = ::onShowCheckedClicked,
-            ),
-            TopBarAction(
-                contentDescription = if (sorted.value) "Sorted" else "Not sorted",
-                icon = Res.drawable.ic_sort,
-                isOn = sorted.value,
-                onClick = ::onSortClicked,
+        scaffoldViewModel.setTopBarActions(
+            listOf(
+                TopBarAction(
+                    contentDescription = if (showChecked.value) "Show checked items" else "Hide checked items",
+                    icon = Res.drawable.ic_check_box,
+                    isOn = showChecked.value,
+                    onClick = ::onShowCheckedClicked,
+                ),
+                TopBarAction(
+                    contentDescription = if (sorted.value) "Sorted" else "Not sorted",
+                    icon = Res.drawable.ic_sort,
+                    isOn = sorted.value,
+                    onClick = ::onSortClicked,
+                )
             )
         )
     }
@@ -111,7 +112,7 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     fun onNameChanged(name: String) {
         _name.value = name
         repository.updateName(listID, name)
-        scaffoldViewModel.topBarTitle.value = name
+        scaffoldViewModel.updateTopBarTitle(name)
     }
 
     fun addItem(description: String = "", checked: Boolean = false): UIItem {
@@ -139,12 +140,10 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
                 repository.deleteItem(listID, itemId)
                 deletedItem = Pair(index, itemToDelete)
 
-                scaffoldViewModel.snackbarEvents.send(
-                    SnackbarEvent(
-                        message = "Deleted: ${itemToDelete.description}",
-                        actionLabel = "Undo",
-                        action = { undeleteItem() }
-                    )
+                scaffoldViewModel.showSnackbar(
+                    message = "Deleted: ${itemToDelete.description}",
+                    actionLabel = "Undo",
+                    action = { undeleteItem() }
                 )
             }
         }

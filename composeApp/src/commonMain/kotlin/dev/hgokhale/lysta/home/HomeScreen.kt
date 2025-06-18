@@ -65,11 +65,11 @@ fun HomeScreen(
 @Composable
 private fun ConfigureScaffold(scaffoldViewModel: ScaffoldViewModel, homeViewModel: HomeViewModel) {
     LaunchedEffect(Unit) {
-        scaffoldViewModel.topBarTitle.value = "My lists"
-        scaffoldViewModel.onTitleChange.value = null
-        scaffoldViewModel.showBackButton.value = false
-        scaffoldViewModel.fabAction.value = { homeViewModel.createList() }
-        scaffoldViewModel.topBarActions.value = listOf()
+        scaffoldViewModel.updateTopBarTitle("My lists")
+        scaffoldViewModel.setOnTitleChange(null)
+        scaffoldViewModel.showBackButton(false)
+        scaffoldViewModel.setFabAction { homeViewModel.createList() }
+        scaffoldViewModel.setTopBarActions(listOf())
     }
 }
 
