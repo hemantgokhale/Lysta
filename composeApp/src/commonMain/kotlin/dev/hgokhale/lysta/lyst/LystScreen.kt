@@ -263,6 +263,7 @@ private fun ItemEditor(
     val addItemAndResetTextField: () -> Unit = {
         onAddItem(text, checked)
         text = ""
+        autocompleteSuggestions = listOf()
         focusRequester.requestFocus()
     }
 
