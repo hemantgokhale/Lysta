@@ -187,7 +187,7 @@ private fun LystItem(
             textStyle = LocalTextStyle.current.copy(
                 color = if (item.checked) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
             ),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
