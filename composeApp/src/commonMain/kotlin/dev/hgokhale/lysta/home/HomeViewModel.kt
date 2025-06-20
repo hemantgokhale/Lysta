@@ -3,9 +3,7 @@ package dev.hgokhale.lysta.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hgokhale.lysta.app.NavigationDestination
-import dev.hgokhale.lysta.app.NavigationEvent
 import dev.hgokhale.lysta.app.ScaffoldViewModel
-import dev.hgokhale.lysta.app.SnackbarEvent
 import dev.hgokhale.lysta.model.Lyst
 import dev.hgokhale.lysta.repository.getRepository
 import dev.hgokhale.lysta.utils.Highlightable
@@ -53,13 +51,17 @@ class HomeViewModel(val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
 
         publishNewItemNotification(newItem)
         viewModelScope.launch {
-            scaffoldViewModel.navigationEvents.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(lyst.id)))
+            scaffoldViewModel.navigate(NavigationDestination.Lyst.routeFor(lyst.id))
+            scaffoldViewModel.focusOnTitle(true)
         }
         return lyst.id
     }
 
     fun onListClicked(id: String) {
-        viewModelScope.launch { scaffoldViewModel.navigationEvents.send(NavigationEvent.Navigate(NavigationDestination.Lyst.routeFor(id))) }
+        viewModelScope.launch {
+            scaffoldViewModel.navigate(NavigationDestination.Lyst.routeFor(id))
+            scaffoldViewModel.focusOnTitle(false)
+        }
     }
 
     fun deleteList(id: String) {
@@ -72,12 +74,10 @@ class HomeViewModel(val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
                     repository.deleteList(id)
                     deletedList = Pair(index, list)
                 }
-                scaffoldViewModel.snackbarEvents.send(
-                    SnackbarEvent(
-                        message = "Deleted: ${listToDelete.name}",
-                        actionLabel = "Undo",
-                        action = { undeleteList() }
-                    )
+                scaffoldViewModel.showSnackbar(
+                    message = "Deleted: ${listToDelete.name}",
+                    actionLabel = "Undo",
+                    action = { undeleteList() }
                 )
             }
         }

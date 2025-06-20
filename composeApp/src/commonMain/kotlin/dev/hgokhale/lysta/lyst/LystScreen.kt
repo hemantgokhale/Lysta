@@ -80,10 +80,10 @@ fun LystScreen(
 @Composable
 private fun ConfigureScaffold(scaffoldViewModel: ScaffoldViewModel, lystViewModel: LystViewModel) {
     LaunchedEffect(Unit) {
-        scaffoldViewModel.topBarTitle.value = lystViewModel.name.value
-        scaffoldViewModel.onTitleChange.value = { lystViewModel.onNameChanged(it) }
-        scaffoldViewModel.showBackButton.value = true
-        scaffoldViewModel.fabAction.value = null
+        scaffoldViewModel.updateTopBarTitle(lystViewModel.name.value)
+        scaffoldViewModel.setOnTitleChange { lystViewModel.onNameChanged(name = it) }
+        scaffoldViewModel.showBackButton(true)
+        scaffoldViewModel.setFabAction(null)
         lystViewModel.setTopBarActions()
     }
 }
@@ -187,7 +187,7 @@ private fun LystItem(
             textStyle = LocalTextStyle.current.copy(
                 color = if (item.checked) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
             ),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             singleLine = true,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
@@ -263,6 +263,7 @@ private fun ItemEditor(
     val addItemAndResetTextField: () -> Unit = {
         onAddItem(text, checked)
         text = ""
+        autocompleteSuggestions = listOf()
         focusRequester.requestFocus()
     }
 
