@@ -29,10 +29,11 @@ sealed interface UiEvent {
 }
 
 data class TopBarState(
-    val title: String = "",
+    val actions: List<TopBarAction> = emptyList(),
     val onTitleChange: ((String) -> Unit)? = null,
+    val focusOnTitle: Boolean = false,
     val showBackButton: Boolean = false,
-    val actions: List<TopBarAction> = emptyList()
+    val title: String = "",
 )
 
 class ScaffoldViewModel : ViewModel() {
@@ -44,6 +45,10 @@ class ScaffoldViewModel : ViewModel() {
 
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents = _uiEvents.asSharedFlow()
+
+    fun focusOnTitle(requestFocus: Boolean) {
+        _topBarState.update { it.copy(focusOnTitle = requestFocus) }
+    }
 
     fun updateTopBarTitle(title: String) {
         _topBarState.update { it.copy(title = title) }

@@ -52,12 +52,16 @@ class HomeViewModel(val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
         publishNewItemNotification(newItem)
         viewModelScope.launch {
             scaffoldViewModel.navigate(NavigationDestination.Lyst.routeFor(lyst.id))
+            scaffoldViewModel.focusOnTitle(true)
         }
         return lyst.id
     }
 
     fun onListClicked(id: String) {
-        viewModelScope.launch { scaffoldViewModel.navigate(NavigationDestination.Lyst.routeFor(id)) }
+        viewModelScope.launch {
+            scaffoldViewModel.navigate(NavigationDestination.Lyst.routeFor(id))
+            scaffoldViewModel.focusOnTitle(false)
+        }
     }
 
     fun deleteList(id: String) {
