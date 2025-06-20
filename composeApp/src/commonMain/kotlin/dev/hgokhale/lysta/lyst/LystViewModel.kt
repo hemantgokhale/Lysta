@@ -208,15 +208,22 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
         }
 
     fun autocompleteSuggestionSelected(suggestion: String) {
+        var itemInQuestion: UIItem? = null
         _items.value = _items.value.map { item ->
-            if (item.description == suggestion && item.checked) {
+            if (item.description == suggestion) {
                 item
-                    .copy(listItem = item.listItem.copy(checked = false))
-                    .also { repository.updateItemChecked(listID, item.id, checked = false) }
+                    .copy(listItem = item.listItem.copy(checked = false), showHighlight = true)
+                    .also {
+                        repository.updateItemChecked(listID, it.id, checked = false)
+                        itemInQuestion = it
+                    }
             } else {
                 item
             }
         }
+        // It is important that the new item notification is published after items are updated.
+        // Cannot do it inside `also`
+        itemInQuestion?.let { publishNewItemNotification(it) }
     }
 
     override fun toString(): String = "List: $name"
