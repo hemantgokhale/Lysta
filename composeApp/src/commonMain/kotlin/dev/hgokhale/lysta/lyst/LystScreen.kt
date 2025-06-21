@@ -261,10 +261,14 @@ private fun ItemEditor(
     var checked by remember { mutableStateOf(false) }
     var autocompleteSuggestions by remember { mutableStateOf(listOf<String>()) }
     val addItemAndResetTextField: () -> Unit = {
-        onAddItem(text, checked)
-        text = ""
-        autocompleteSuggestions = listOf()
-        focusRequester.requestFocus()
+        if (text.isNotBlank()) {
+            onAddItem(text, checked)
+            text = ""
+            autocompleteSuggestions = listOf()
+            focusRequester.requestFocus()
+        } else {
+            onCancel()
+        }
     }
 
     Row(modifier = Modifier.focusGroup(), verticalAlignment = Alignment.CenterVertically) {
