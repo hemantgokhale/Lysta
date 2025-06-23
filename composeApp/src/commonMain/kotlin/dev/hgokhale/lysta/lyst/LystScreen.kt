@@ -42,8 +42,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -140,6 +140,11 @@ private fun LystItem(
 
     var description by remember { mutableStateOf(item.description) }
     var isHovered by remember { mutableStateOf(false) }
+    var isFocused by remember { mutableStateOf(false) }
+
+    val textStyle = LocalTextStyle.current.copy(
+        color = if (item.checked) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
+    )
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -180,41 +185,73 @@ private fun LystItem(
             modifier = Modifier
                 .weight(1f)
                 .onFocusChanged { focusState ->
-                    if (!focusState.isFocused) {
+                    isFocused = focusState.isFocused
+                    if (!isFocused) {
                         lystViewModel.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
-            textStyle = LocalTextStyle.current.copy(
-                color = if (item.checked) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
-            ),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            textStyle = textStyle,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            singleLine = true,
+            singleLine = !isFocused,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
+            decorationBox = { innerTextField ->
+                if (isFocused) {
+                    innerTextField()
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = description.replace("\n", " "),
+                            modifier = Modifier.weight(1f),
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            style = textStyle,
+                        )
+                    }
+                }
+            }
         )
-        if (!isMobile && isHovered) {
-            IconButton(onClick = onDelete) {
+        if (isFocused) {
+            IconButton(
+                onClick = {
+                    lystViewModel.onItemDescriptionChanged(itemId = item.id, description = description)
+                    focusManager.clearFocus()
+                },
+            ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Delete item",
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Done",
                     tint = MaterialTheme.colorScheme.onSecondary,
                 )
             }
-        }
-        if (!listIsSorted) {
-            IconButton(
-                onClick = { },
-                modifier = with(reorderableCollectionItemScope) {
-                    Modifier
-                        .draggableHandle()
-                        .alpha(if (items.size > 1) 1f else 0f)
+        } else {
+            if (!isMobile && isHovered) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Delete item",
+                        tint = MaterialTheme.colorScheme.onSecondary,
+                    )
                 }
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_drag_handle),
-                    contentDescription = "Move item",
-                    tint = MaterialTheme.colorScheme.onSecondary,
-                )
+            }
+            if (!listIsSorted) {
+                IconButton(
+                    onClick = { },
+                    modifier = with(reorderableCollectionItemScope) {
+                        Modifier
+                            .draggableHandle()
+                            .alpha(if (items.size > 1) 1f else 0f)
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_drag_handle),
+                        contentDescription = "Move item",
+                        tint = MaterialTheme.colorScheme.onSecondary,
+                    )
+                }
             }
         }
     }
@@ -291,9 +328,9 @@ private fun ItemEditor(
                 .weight(1f)
                 .focusRequester(focusRequester),
             textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onBackground),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             keyboardActions = KeyboardActions(onDone = { addItemAndResetTextField() }),
-            singleLine = true,
+            singleLine = false,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
             suggestions = autocompleteSuggestions
         )
