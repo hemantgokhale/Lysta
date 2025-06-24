@@ -63,6 +63,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.compose.navigation)
+            implementation(libs.confettikit)
             implementation(libs.material.icons.core)
             implementation(libs.reorderable)
             implementation(projects.shared)
@@ -84,7 +85,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0.8"
+        versionName = "1.0.9"
     }
     packaging {
         resources {

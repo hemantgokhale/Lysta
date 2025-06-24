@@ -4,8 +4,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -54,12 +56,20 @@ import dev.hgokhale.lysta.utils.Highlightable
 import dev.hgokhale.lysta.utils.LoadingIndicator
 import dev.hgokhale.lysta.utils.ScrollToNewItemEffect
 import dev.hgokhale.lysta.utils.SwipeToDeleteItem
+import io.github.vinceglb.confettikit.compose.ConfettiKit
+import io.github.vinceglb.confettikit.core.Angle
+import io.github.vinceglb.confettikit.core.Party
+import io.github.vinceglb.confettikit.core.Position
+import io.github.vinceglb.confettikit.core.Spread
+import io.github.vinceglb.confettikit.core.emitter.Emitter
+import io.github.vinceglb.confettikit.core.models.Shape
 import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_drag_handle
 import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun LystScreen(
@@ -95,34 +105,60 @@ private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
         lystViewModel.moveItem(from.index, to.index)
     }
+    val showConfetti by lystViewModel.lastItemChecked.collectAsStateWithLifecycle()
 
     ScrollToNewItemEffect(lystViewModel.newItem, lazyListState)
 
-    Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
-        LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
-            items(items = itemsToRender, key = { item -> item.id }) { item ->
-                ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
-                    val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
-                    Surface(shadowElevation = elevation) {
-                        val onDelete = { lystViewModel.deleteItem(item.id) }
-                        SwipeToDeleteItem(onDelete = onDelete) {
-                            Highlightable(item) { modifier ->
-                                LystItem(
-                                    lystViewModel = lystViewModel,
-                                    item = item,
-                                    onDelete = onDelete,
-                                    reorderableCollectionItemScope = this,
-                                    modifier = modifier
-                                )
+    Box {
+        Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
+            LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
+                items(items = itemsToRender, key = { item -> item.id }) { item ->
+                    ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
+                        val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
+                        Surface(shadowElevation = elevation) {
+                            val onDelete = { lystViewModel.deleteItem(item.id) }
+                            SwipeToDeleteItem(onDelete = onDelete) {
+                                Highlightable(item) { modifier ->
+                                    LystItem(
+                                        lystViewModel = lystViewModel,
+                                        item = item,
+                                        onDelete = onDelete,
+                                        reorderableCollectionItemScope = this,
+                                        modifier = modifier
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+            AddItem(lystViewModel)
         }
-        AddItem(lystViewModel)
+        if (showConfetti) {
+            ConfettiKit(
+                modifier = Modifier.fillMaxSize(),
+                parties = confetti()
+            )
+        }
     }
 }
+
+private fun confetti() = listOf(
+    Party(
+        angle = Angle.TOP + 45,
+        spread = 45,
+        shapes = listOf(Shape.Square, Shape.Circle, Shape.Rectangle(heightRatio = 0.2f)),
+        position = Position.Relative(0.0, 0.25),
+        emitter = Emitter(duration = 5.seconds).perSecond(30)
+    ),
+    Party(
+        angle = Angle.TOP - 45,
+        spread = 45,
+        shapes = listOf(Shape.Square, Shape.Circle, Shape.Rectangle(heightRatio = 0.2f)),
+        position = Position.Relative(1.0, 0.25),
+        emitter = Emitter(duration = 5.seconds).perSecond(30)
+    )
+)
 
 @Composable
 private fun LystItem(

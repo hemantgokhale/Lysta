@@ -49,6 +49,9 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     private val _items: MutableStateFlow<List<UIItem>> = MutableStateFlow(emptyList())
     private val repository = getRepository()
 
+    private val _lastItemChecked = MutableStateFlow(false)
+    val lastItemChecked = _lastItemChecked.asStateFlow()
+
     init {
         viewModelScope.launch {
             repository
@@ -180,6 +183,8 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
                 item
             }
         }
+
+        _lastItemChecked.value = _items.value.all { it.checked }
     }
 
     fun moveItem(from: Int, to: Int) {
