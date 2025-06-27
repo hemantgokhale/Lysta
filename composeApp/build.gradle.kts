@@ -63,6 +63,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.compose.navigation)
+            implementation(libs.confettikit)
             implementation(libs.material.icons.core)
             implementation(libs.reorderable)
             implementation(projects.shared)
@@ -80,11 +81,11 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "dev.hgokhale.lysta"
+        applicationId = "dev.hgokhale.lists"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.9"
     }
     packaging {
         resources {

@@ -4,8 +4,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,8 +44,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,12 +56,19 @@ import dev.hgokhale.lysta.utils.Highlightable
 import dev.hgokhale.lysta.utils.LoadingIndicator
 import dev.hgokhale.lysta.utils.ScrollToNewItemEffect
 import dev.hgokhale.lysta.utils.SwipeToDeleteItem
+import io.github.vinceglb.confettikit.compose.ConfettiKit
+import io.github.vinceglb.confettikit.core.Angle
+import io.github.vinceglb.confettikit.core.Party
+import io.github.vinceglb.confettikit.core.Position
+import io.github.vinceglb.confettikit.core.emitter.Emitter
+import io.github.vinceglb.confettikit.core.models.Shape
 import lysta.composeapp.generated.resources.Res
 import lysta.composeapp.generated.resources.ic_drag_handle
 import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun LystScreen(
@@ -95,34 +104,60 @@ private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
         lystViewModel.moveItem(from.index, to.index)
     }
+    val showConfetti by lystViewModel.lastItemChecked.collectAsStateWithLifecycle()
 
     ScrollToNewItemEffect(lystViewModel.newItem, lazyListState)
 
-    Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
-        LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
-            items(items = itemsToRender, key = { item -> item.id }) { item ->
-                ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
-                    val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
-                    Surface(shadowElevation = elevation) {
-                        val onDelete = { lystViewModel.deleteItem(item.id) }
-                        SwipeToDeleteItem(onDelete = onDelete) {
-                            Highlightable(item) { modifier ->
-                                LystItem(
-                                    lystViewModel = lystViewModel,
-                                    item = item,
-                                    onDelete = onDelete,
-                                    reorderableCollectionItemScope = this,
-                                    modifier = modifier
-                                )
+    Box {
+        Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
+            LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
+                items(items = itemsToRender, key = { item -> item.id }) { item ->
+                    ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
+                        val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
+                        Surface(shadowElevation = elevation) {
+                            val onDelete = { lystViewModel.deleteItem(item.id) }
+                            SwipeToDeleteItem(onDelete = onDelete) {
+                                Highlightable(item) { modifier ->
+                                    LystItem(
+                                        lystViewModel = lystViewModel,
+                                        item = item,
+                                        onDelete = onDelete,
+                                        reorderableCollectionItemScope = this,
+                                        modifier = modifier
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+            AddItem(lystViewModel)
         }
-        AddItem(lystViewModel)
+        if (showConfetti) {
+            ConfettiKit(
+                modifier = Modifier.fillMaxSize(),
+                parties = confetti()
+            )
+        }
     }
 }
+
+private fun confetti() = listOf(
+    Party(
+        angle = Angle.TOP + 45,
+        spread = 45,
+        shapes = listOf(Shape.Square, Shape.Circle, Shape.Rectangle(heightRatio = 0.2f)),
+        position = Position.Relative(0.0, 0.25),
+        emitter = Emitter(duration = 5.seconds).perSecond(30)
+    ),
+    Party(
+        angle = Angle.TOP - 45,
+        spread = 45,
+        shapes = listOf(Shape.Square, Shape.Circle, Shape.Rectangle(heightRatio = 0.2f)),
+        position = Position.Relative(1.0, 0.25),
+        emitter = Emitter(duration = 5.seconds).perSecond(30)
+    )
+)
 
 @Composable
 private fun LystItem(
@@ -140,6 +175,11 @@ private fun LystItem(
 
     var description by remember { mutableStateOf(item.description) }
     var isHovered by remember { mutableStateOf(false) }
+    var isFocused by remember { mutableStateOf(false) }
+
+    val textStyle = LocalTextStyle.current.copy(
+        color = if (item.checked) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
+    )
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -180,41 +220,73 @@ private fun LystItem(
             modifier = Modifier
                 .weight(1f)
                 .onFocusChanged { focusState ->
-                    if (!focusState.isFocused) {
+                    isFocused = focusState.isFocused
+                    if (!isFocused) {
                         lystViewModel.onItemDescriptionChanged(itemId = item.id, description = description)
                     }
                 },
-            textStyle = LocalTextStyle.current.copy(
-                color = if (item.checked) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onBackground,
-            ),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            textStyle = textStyle,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            singleLine = true,
+            singleLine = !isFocused,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
+            decorationBox = { innerTextField ->
+                if (isFocused) {
+                    innerTextField()
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = description.replace("\n", " "),
+                            modifier = Modifier.weight(1f),
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            style = textStyle,
+                        )
+                    }
+                }
+            }
         )
-        if (!isMobile && isHovered) {
-            IconButton(onClick = onDelete) {
+        if (isFocused) {
+            IconButton(
+                onClick = {
+                    lystViewModel.onItemDescriptionChanged(itemId = item.id, description = description)
+                    focusManager.clearFocus()
+                },
+            ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Delete item",
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Done",
                     tint = MaterialTheme.colorScheme.onSecondary,
                 )
             }
-        }
-        if (!listIsSorted) {
-            IconButton(
-                onClick = { },
-                modifier = with(reorderableCollectionItemScope) {
-                    Modifier
-                        .draggableHandle()
-                        .alpha(if (items.size > 1) 1f else 0f)
+        } else {
+            if (!isMobile && isHovered) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Delete item",
+                        tint = MaterialTheme.colorScheme.onSecondary,
+                    )
                 }
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_drag_handle),
-                    contentDescription = "Move item",
-                    tint = MaterialTheme.colorScheme.onSecondary,
-                )
+            }
+            if (!listIsSorted) {
+                IconButton(
+                    onClick = { },
+                    modifier = with(reorderableCollectionItemScope) {
+                        Modifier
+                            .draggableHandle()
+                            .alpha(if (items.size > 1) 1f else 0f)
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_drag_handle),
+                        contentDescription = "Move item",
+                        tint = MaterialTheme.colorScheme.onSecondary,
+                    )
+                }
             }
         }
     }
@@ -261,10 +333,14 @@ private fun ItemEditor(
     var checked by remember { mutableStateOf(false) }
     var autocompleteSuggestions by remember { mutableStateOf(listOf<String>()) }
     val addItemAndResetTextField: () -> Unit = {
-        onAddItem(text, checked)
-        text = ""
-        autocompleteSuggestions = listOf()
-        focusRequester.requestFocus()
+        if (text.isNotBlank()) {
+            onAddItem(text, checked)
+            text = ""
+            autocompleteSuggestions = listOf()
+            focusRequester.requestFocus()
+        } else {
+            onCancel()
+        }
     }
 
     Row(modifier = Modifier.focusGroup(), verticalAlignment = Alignment.CenterVertically) {
@@ -287,9 +363,9 @@ private fun ItemEditor(
                 .weight(1f)
                 .focusRequester(focusRequester),
             textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onBackground),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             keyboardActions = KeyboardActions(onDone = { addItemAndResetTextField() }),
-            singleLine = true,
+            singleLine = false,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
             suggestions = autocompleteSuggestions
         )
