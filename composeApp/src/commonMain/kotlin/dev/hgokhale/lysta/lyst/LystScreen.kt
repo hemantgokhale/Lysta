@@ -58,6 +58,7 @@ import dev.hgokhale.lysta.utils.Highlightable
 import dev.hgokhale.lysta.utils.LoadingIndicator
 import dev.hgokhale.lysta.utils.ScrollToNewItemEffect
 import dev.hgokhale.lysta.utils.SwipeToDeleteItem
+import dev.hgokhale.lysta.utils.toSingleLine
 import io.github.vinceglb.confettikit.compose.ConfettiKit
 import io.github.vinceglb.confettikit.core.Angle
 import io.github.vinceglb.confettikit.core.Party
@@ -240,7 +241,7 @@ private fun LystItem(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = description.replace("\n", " "),
+                            text = description.toSingleLine(),
                             modifier = Modifier.weight(1f),
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 1,
@@ -322,7 +323,7 @@ private fun ItemEditor(
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf("") }
     var checked by remember { mutableStateOf(false) }
-    var autocompleteSuggestions by remember { mutableStateOf(listOf<String>()) }
+    var autocompleteSuggestions: List<AutoCompleteSuggestion> by remember { mutableStateOf(listOf()) }
     val addItemAndResetTextField: () -> Unit = {
         if (text.isNotBlank()) {
             onAddItem(text, checked)

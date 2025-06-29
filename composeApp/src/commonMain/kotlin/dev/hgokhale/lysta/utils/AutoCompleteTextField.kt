@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,17 +19,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import dev.hgokhale.lysta.lyst.AutoCompleteSuggestion
 import kotlin.math.roundToInt
 
 
@@ -42,7 +48,7 @@ fun AutoCompleteTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = false,
     cursorBrush: Brush,
-    suggestions: List<String>,
+    suggestions: List<AutoCompleteSuggestion>,
 ) {
     var popupHeight by remember { mutableStateOf(0) } // in pixels
     var showPopup by remember { mutableStateOf(false) }
@@ -52,7 +58,7 @@ fun AutoCompleteTextField(
     if (suggestions.isNotEmpty() && showPopup) {
         Popup(
             onDismissRequest = { showPopup = false },
-            offset = IntOffset(textFieldOffset.x, textFieldOffset.y - popupHeight - popupToTextFieldOffset),
+            offset = IntOffset(0, textFieldOffset.y - popupHeight - popupToTextFieldOffset),
             properties = PopupProperties(focusable = false)
         ) {
             Surface(
@@ -66,16 +72,44 @@ fun AutoCompleteTextField(
                 ) {
                     for (suggestion in suggestions) {
                         Row(
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .clickable {
-                                    onSuggestionSelected(suggestion)
+                                    onSuggestionSelected(suggestion.text)
                                     showPopup = false
                                 }
-                                .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp)
+                                .padding(start = 0.dp, end = 16.dp, top = 0.dp, bottom = 0.dp)
                         ) {
-                            Text(text = suggestion,
-                                color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.8f),
-                                style = textStyle)
+                            val textColor = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.8f)
+                            Checkbox(
+                                checked = suggestion.checked,
+                                onCheckedChange = {
+                                    onSuggestionSelected(suggestion.text)
+                                    showPopup = false
+                                },
+                                colors = CheckboxColors(
+                                    checkedCheckmarkColor = textColor,
+                                    uncheckedCheckmarkColor = textColor,
+                                    checkedBoxColor = Color.Transparent,
+                                    uncheckedBoxColor = Color.Transparent,
+                                    disabledCheckedBoxColor = Color.Transparent,
+                                    disabledUncheckedBoxColor = Color.Transparent,
+                                    disabledIndeterminateBoxColor = Color.Transparent,
+                                    checkedBorderColor = textColor,
+                                    uncheckedBorderColor = textColor,
+                                    disabledBorderColor = textColor,
+                                    disabledUncheckedBorderColor = textColor,
+                                    disabledIndeterminateBorderColor = textColor,
+                                ),
+                            )
+
+                            Text(
+                                text = suggestion.text.toSingleLine(),
+                                color = textColor,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                style = textStyle
+                            )
                         }
                     }
                 }
