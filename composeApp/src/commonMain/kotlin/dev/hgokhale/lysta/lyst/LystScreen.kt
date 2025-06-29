@@ -36,14 +36,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.hgokhale.lysta.app.ScaffoldViewModel
 import dev.hgokhale.lysta.getPlatform
 import dev.hgokhale.lysta.utils.AutoCompleteTextField
+import dev.hgokhale.lysta.utils.DraggableHandle
 import dev.hgokhale.lysta.utils.Highlightable
 import dev.hgokhale.lysta.utils.LoadingIndicator
 import dev.hgokhale.lysta.utils.ScrollToNewItemEffect
@@ -62,9 +64,6 @@ import io.github.vinceglb.confettikit.core.Party
 import io.github.vinceglb.confettikit.core.Position
 import io.github.vinceglb.confettikit.core.emitter.Emitter
 import io.github.vinceglb.confettikit.core.models.Shape
-import lysta.composeapp.generated.resources.Res
-import lysta.composeapp.generated.resources.ic_drag_handle
-import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -101,8 +100,10 @@ private fun ConfigureScaffold(scaffoldViewModel: ScaffoldViewModel, lystViewMode
 private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
     val itemsToRender by lystViewModel.itemsToRender.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
+    val hapticFeedback = LocalHapticFeedback.current
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
         lystViewModel.moveItem(from.index, to.index)
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
     val showConfetti by lystViewModel.lastItemChecked.collectAsStateWithLifecycle()
 
@@ -273,20 +274,10 @@ private fun LystItem(
                 }
             }
             if (!listIsSorted) {
-                IconButton(
-                    onClick = { },
-                    modifier = with(reorderableCollectionItemScope) {
-                        Modifier
-                            .draggableHandle()
-                            .alpha(if (items.size > 1) 1f else 0f)
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_drag_handle),
-                        contentDescription = "Move item",
-                        tint = MaterialTheme.colorScheme.onSecondary,
-                    )
-                }
+                DraggableHandle(
+                    reorderableCollectionItemScope = reorderableCollectionItemScope,
+                    show = items.size > 1
+                )
             }
         }
     }
