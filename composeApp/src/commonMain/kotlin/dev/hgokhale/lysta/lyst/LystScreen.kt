@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -46,19 +45,18 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.hgokhale.lysta.app.ScaffoldViewModel
 import dev.hgokhale.lysta.getPlatform
 import dev.hgokhale.lysta.utils.AutoCompleteTextField
+import dev.hgokhale.lysta.utils.CollapsingTextField
 import dev.hgokhale.lysta.utils.DraggableHandle
 import dev.hgokhale.lysta.utils.Highlightable
 import dev.hgokhale.lysta.utils.LoadingIndicator
 import dev.hgokhale.lysta.utils.ScrollToNewItemEffect
 import dev.hgokhale.lysta.utils.SwipeToDeleteItem
-import dev.hgokhale.lysta.utils.toSingleLine
 import io.github.vinceglb.confettikit.compose.ConfettiKit
 import io.github.vinceglb.confettikit.core.Angle
 import io.github.vinceglb.confettikit.core.Party
@@ -216,7 +214,7 @@ private fun LystItem(
                 disabledIndeterminateBorderColor = MaterialTheme.colorScheme.onSecondary,
             ),
         )
-        BasicTextField(
+        CollapsingTextField(
             value = description,
             onValueChange = { description = it },
             modifier = Modifier
@@ -230,26 +228,7 @@ private fun LystItem(
             textStyle = textStyle,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            singleLine = !isFocused,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
-            decorationBox = { innerTextField ->
-                if (isFocused) {
-                    innerTextField()
-                } else {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = description.toSingleLine(),
-                            modifier = Modifier.weight(1f),
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 1,
-                            style = textStyle,
-                        )
-                    }
-                }
-            }
         )
         if (isFocused) {
             IconButton(
