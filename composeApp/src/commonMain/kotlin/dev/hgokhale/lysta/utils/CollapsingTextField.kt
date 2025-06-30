@@ -59,13 +59,20 @@ private class EllipsisOnUnfocusTransformation(
             val ellipsis = "..."
             val ellipsisWidth = textMeasurer.measure(ellipsis, style = textStyle).size.width
             var truncatedEndIndex = 0
-            // Find the last character that fits.
-            for (i in finalText.length downTo 0) {
-                val substring = finalText.substring(0, i)
+            // Binary search to find the optimal truncation point
+            var low = 0
+            var high = finalText.length
+            while (low <= high) {
+                val mid = (low + high) / 2
+                val substring = finalText.substring(0, mid)
                 val substringWidth = textMeasurer.measure(substring, style = textStyle).size.width
                 if (substringWidth + ellipsisWidth <= availableWidth) {
-                    truncatedEndIndex = i
-                    break
+                    // This one fits, it's a candidate. Try for a longer substring.
+                    truncatedEndIndex = mid
+                    low = mid + 1
+                } else {
+                    // This one is too long, try for a shorter substring.
+                    high = mid - 1
                 }
             }
             finalText = AnnotatedString(finalText.substring(0, truncatedEndIndex) + ellipsis)
