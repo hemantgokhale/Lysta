@@ -20,6 +20,9 @@ import lysta.composeapp.generated.resources.ic_check_box
 import lysta.composeapp.generated.resources.ic_sort
 import kotlin.uuid.ExperimentalUuidApi
 
+
+data class AutoCompleteSuggestion(val text: String, val checked: Boolean)
+
 @OptIn(ExperimentalUuidApi::class)
 class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
     data class UIItem(
@@ -203,13 +206,13 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
         }
     }
 
-    fun getAutocompleteSuggestions(query: String): List<String> =
+    fun getAutocompleteSuggestions(query: String): List<AutoCompleteSuggestion> =
         if (query.isEmpty()) {
             emptyList()
         } else {
             _items.value
                 .filter { it.description.startsWith(query, ignoreCase = true) }
-                .map { it.description }
+                .map { AutoCompleteSuggestion(text = it.description, checked = it.checked) }
         }
 
     fun autocompleteSuggestionSelected(suggestion: String) {

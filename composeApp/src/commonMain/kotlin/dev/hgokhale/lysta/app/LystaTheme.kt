@@ -64,7 +64,7 @@ private fun lystaColorSchemes(): Pair<ColorScheme, ColorScheme> {
         onSecondary = Color(0x77FFFFFF),
         onBackground = Color.White,
         onSurface = Color.White,
-        inverseSurface = Color(0xFF1F1F1F),
+        inverseSurface = Color(0xFF3F3F3F),
         inverseOnSurface = Color(0xFFFFFFFF),
         inversePrimary = Color(0xFFA5D3EC),
     )

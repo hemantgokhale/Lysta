@@ -23,22 +23,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.hgokhale.lysta.app.ScaffoldViewModel
 import dev.hgokhale.lysta.getPlatform
+import dev.hgokhale.lysta.utils.DraggableHandle
 import dev.hgokhale.lysta.utils.Highlightable
 import dev.hgokhale.lysta.utils.LoadingIndicator
 import dev.hgokhale.lysta.utils.ScrollToNewItemEffect
 import dev.hgokhale.lysta.utils.SwipeToDeleteItem
-import lysta.composeapp.generated.resources.Res
-import lysta.composeapp.generated.resources.ic_drag_handle
-import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -77,8 +76,10 @@ private fun ConfigureScaffold(scaffoldViewModel: ScaffoldViewModel, homeViewMode
 private fun Home(homeViewModel: HomeViewModel, modifier: Modifier = Modifier) {
     val lists by homeViewModel.lists.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
+    val hapticFeedback = LocalHapticFeedback.current
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
         homeViewModel.moveList(from.index, to.index)
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
 
     ScrollToNewItemEffect(homeViewModel.newItem, lazyListState)
@@ -141,19 +142,10 @@ private fun HomeItem(
                 )
             }
         }
-        IconButton(
-            onClick = { },
-            modifier = with(reorderableCollectionItemScope) {
-                Modifier.draggableHandle()
-                    .alpha(if (lists.size > 1) 1f else 0f)
-            }
-        ) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_drag_handle),
-                contentDescription = "Move item",
-                tint = MaterialTheme.colorScheme.onSecondary,
-            )
-        }
+        DraggableHandle(
+            reorderableCollectionItemScope = reorderableCollectionItemScope,
+            show = lists.size > 1
+        )
 
     }
 }
