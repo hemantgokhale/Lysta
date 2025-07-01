@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -73,7 +74,7 @@ fun LystScreen(
     listId: String,
     scaffoldViewModel: ScaffoldViewModel,
     modifier: Modifier = Modifier,
-    lystViewModel: LystViewModel = viewModel { LystViewModel(listID = listId, scaffoldViewModel = scaffoldViewModel) }
+    lystViewModel: LystViewModel = viewModel { LystViewModel(listID = listId, scaffoldViewModel = scaffoldViewModel) },
 ) {
     val listLoaded by lystViewModel.loaded.collectAsStateWithLifecycle()
     if (!listLoaded) {
@@ -106,11 +107,23 @@ private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
     }
     val showConfetti by lystViewModel.lastItemChecked.collectAsStateWithLifecycle()
 
+    var inEditMode by remember { mutableStateOf(false) }
+
     ScrollToNewItemEffect(lystViewModel.newItem, lazyListState)
 
     Box {
         Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
-            LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        inEditMode = !inEditMode
+                    },
+                state = lazyListState
+            ) {
                 items(items = itemsToRender, key = { item -> item.id }) { item ->
                     ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
                         val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
@@ -131,7 +144,7 @@ private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
                     }
                 }
             }
-            AddItem(lystViewModel)
+            AddItem(lystViewModel, inEditMode) { inEditMode = it }
         }
         if (showConfetti) {
             ConfettiKit(
@@ -165,7 +178,7 @@ private fun LystItem(
     item: LystViewModel.UIItem,
     onDelete: () -> Unit,
     reorderableCollectionItemScope: ReorderableCollectionItemScope,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -264,9 +277,8 @@ private fun LystItem(
 }
 
 @Composable
-private fun AddItem(lystViewModel: LystViewModel) {
-    var inEditMode by remember { mutableStateOf(false) }
-    Row(modifier = Modifier.onFocusChanged { inEditMode = it.hasFocus }) {
+private fun AddItem(lystViewModel: LystViewModel, inEditMode: Boolean, onEditModeChange: (Boolean) -> Unit = {}) {
+    Row(modifier = Modifier.onFocusChanged { onEditModeChange(it.hasFocus) }) {
         if (inEditMode) {
             ItemEditor(
                 lystViewModel = lystViewModel,
@@ -275,16 +287,16 @@ private fun AddItem(lystViewModel: LystViewModel) {
                         lystViewModel.addItem(description, checked)
                     }
                 },
-                onCancel = { inEditMode = false }
+                onCancel = { onEditModeChange(false) }
             )
         } else {
             Row(
-                modifier = Modifier.fillMaxWidth().clickable { inEditMode = true },
+                modifier = Modifier.fillMaxWidth().clickable { onEditModeChange(true) },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // We don't really need an IconButton here since the entire row is clickable, but using it makes this item align with all other items.
                 // This is because Compose automatically adds padding around a tappable target so that it has a minimum recommended touch target size.
-                IconButton(onClick = { inEditMode = true }) {
+                IconButton(onClick = { onEditModeChange(true) }) {
                     Icon(imageVector = Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onBackground)
                 }
                 Text("Add item", color = MaterialTheme.colorScheme.onBackground)
@@ -297,7 +309,7 @@ private fun AddItem(lystViewModel: LystViewModel) {
 private fun ItemEditor(
     lystViewModel: LystViewModel,
     onAddItem: (String, Boolean) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf("") }
