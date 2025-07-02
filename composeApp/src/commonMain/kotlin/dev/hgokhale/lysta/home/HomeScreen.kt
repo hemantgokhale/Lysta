@@ -2,8 +2,10 @@ package dev.hgokhale.lysta.home
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,6 +31,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,7 +50,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 fun HomeScreen(
     scaffoldViewModel: ScaffoldViewModel,
     modifier: Modifier = Modifier,
-    homeViewModel: HomeViewModel = viewModel { HomeViewModel(scaffoldViewModel) }
+    homeViewModel: HomeViewModel = viewModel { HomeViewModel(scaffoldViewModel) },
 ) {
     val loaded by homeViewModel.loaded.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
@@ -84,7 +88,19 @@ private fun Home(homeViewModel: HomeViewModel, modifier: Modifier = Modifier) {
 
     ScrollToNewItemEffect(homeViewModel.newItem, lazyListState)
 
-    LazyColumn(modifier = modifier.fillMaxSize().focusProperties { canFocus = false }, state = lazyListState) {
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                homeViewModel.createList()
+            }
+            .focusProperties { canFocus = false },
+        state = lazyListState
+    ) {
+        if (lists.isEmpty()) item { EmptyHomeMessage() }
         items(items = lists, key = { item -> item.id }) { item ->
             ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
                 val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
@@ -101,6 +117,20 @@ private fun Home(homeViewModel: HomeViewModel, modifier: Modifier = Modifier) {
         }
     }
 }
+
+@Composable
+private fun EmptyHomeMessage(modifier: Modifier = Modifier) {
+    Text(
+        text = "Welcome!\nAdd a list by tapping anywhere in the empty area or the '+' button below.",
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 100.dp)
+            .padding(16.dp),
+        textAlign = TextAlign.Center,
+        style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onBackground),
+    )
+}
+
 
 @Composable
 private fun HomeItem(

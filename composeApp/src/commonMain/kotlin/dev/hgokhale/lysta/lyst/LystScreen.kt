@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -46,6 +47,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -124,6 +126,8 @@ private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
                     },
                 state = lazyListState
             ) {
+                if (itemsToRender.isEmpty()) item { EmptyListMessage() }
+
                 items(items = itemsToRender, key = { item -> item.id }) { item ->
                     ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
                         val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
@@ -153,6 +157,19 @@ private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+@Composable
+private fun EmptyListMessage(modifier: Modifier = Modifier) {
+    Text(
+        text = "Your list is empty.\nAdd items by tapping anywhere in the empty area or 'Add item' below.",
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 100.dp)
+            .padding(16.dp),
+        textAlign = TextAlign.Center,
+        style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onBackground),
+    )
 }
 
 private fun confetti() = listOf(
