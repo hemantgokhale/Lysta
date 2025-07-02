@@ -7,9 +7,12 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -46,6 +49,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -76,12 +80,44 @@ fun LystScreen(
     modifier: Modifier = Modifier,
     lystViewModel: LystViewModel = viewModel { LystViewModel(listID = listId, scaffoldViewModel = scaffoldViewModel) },
 ) {
+    val items by lystViewModel.items.collectAsStateWithLifecycle()
     val listLoaded by lystViewModel.loaded.collectAsStateWithLifecycle()
+    val showConfetti by lystViewModel.lastItemChecked.collectAsStateWithLifecycle()
+
+    var inEditMode by remember { mutableStateOf(false) }
+
     if (!listLoaded) {
         LoadingIndicator(modifier = modifier)
     } else {
         ConfigureScaffold(scaffoldViewModel = scaffoldViewModel, lystViewModel = lystViewModel)
-        Lyst(lystViewModel = lystViewModel, modifier = modifier)
+
+        Box {
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        inEditMode = !inEditMode
+                    }
+            ) {
+                if (items.isEmpty()) {
+                    EmptyLyst()
+                } else {
+                    Lyst(lystViewModel = lystViewModel, modifier = modifier)
+                }
+                AddItem(lystViewModel, inEditMode) { inEditMode = it }
+            }
+
+            if (showConfetti) {
+                ConfettiKit(
+                    modifier = Modifier.fillMaxSize(),
+                    parties = confetti()
+                )
+            }
+        }
     }
 }
 
@@ -97,7 +133,21 @@ private fun ConfigureScaffold(scaffoldViewModel: ScaffoldViewModel, lystViewMode
 }
 
 @Composable
-private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
+private fun ColumnScope.EmptyLyst(modifier: Modifier = Modifier) {
+    Spacer(modifier = modifier.weight(1f))
+    Text(
+        text = "Your list is empty.\nAdd items by tapping anywhere in the empty area or 'Add item' below.",
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        textAlign = TextAlign.Center,
+        style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onBackground),
+    )
+    Spacer(modifier = modifier.weight(2f))
+}
+
+@Composable
+private fun ColumnScope.Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
     val itemsToRender by lystViewModel.itemsToRender.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val hapticFeedback = LocalHapticFeedback.current
@@ -105,52 +155,30 @@ private fun Lyst(lystViewModel: LystViewModel, modifier: Modifier = Modifier) {
         lystViewModel.moveItem(from.index, to.index)
         hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
-    val showConfetti by lystViewModel.lastItemChecked.collectAsStateWithLifecycle()
-
-    var inEditMode by remember { mutableStateOf(false) }
 
     ScrollToNewItemEffect(lystViewModel.newItem, lazyListState)
-
-    Box {
-        Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        inEditMode = !inEditMode
-                    },
-                state = lazyListState
-            ) {
-                items(items = itemsToRender, key = { item -> item.id }) { item ->
-                    ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
-                        val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
-                        Surface(shadowElevation = elevation) {
-                            val onDelete = { lystViewModel.deleteItem(item.id) }
-                            SwipeToDeleteItem(onDelete = onDelete) {
-                                Highlightable(item) { modifier ->
-                                    LystItem(
-                                        lystViewModel = lystViewModel,
-                                        item = item,
-                                        onDelete = onDelete,
-                                        reorderableCollectionItemScope = this,
-                                        modifier = modifier
-                                    )
-                                }
-                            }
+    LazyColumn(
+        modifier = modifier.weight(1f),
+        state = lazyListState
+    ) {
+        items(items = itemsToRender, key = { item -> item.id }) { item ->
+            ReorderableItem(state = reorderableLazyListState, key = item.id) { isDragging ->
+                val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
+                Surface(shadowElevation = elevation) {
+                    val onDelete = { lystViewModel.deleteItem(item.id) }
+                    SwipeToDeleteItem(onDelete = onDelete) {
+                        Highlightable(item) { modifier ->
+                            LystItem(
+                                lystViewModel = lystViewModel,
+                                item = item,
+                                onDelete = onDelete,
+                                reorderableCollectionItemScope = this,
+                                modifier = modifier
+                            )
                         }
                     }
                 }
             }
-            AddItem(lystViewModel, inEditMode) { inEditMode = it }
-        }
-        if (showConfetti) {
-            ConfettiKit(
-                modifier = Modifier.fillMaxSize(),
-                parties = confetti()
-            )
         }
     }
 }
@@ -277,7 +305,7 @@ private fun LystItem(
 }
 
 @Composable
-private fun AddItem(lystViewModel: LystViewModel, inEditMode: Boolean, onEditModeChange: (Boolean) -> Unit = {}) {
+private fun AddItem(lystViewModel: LystViewModel, inEditMode: Boolean, onEditModeChange: (Boolean) -> Unit) {
     Row(modifier = Modifier.onFocusChanged { onEditModeChange(it.hasFocus) }) {
         if (inEditMode) {
             ItemEditor(
