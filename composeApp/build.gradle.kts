@@ -78,7 +78,7 @@ kotlin {
 }
 
 android {
-    namespace = "dev.hgokhale.lysta"
+    namespace = "dev.hgokhale.lists"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -110,11 +110,11 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "dev.hgokhale.lysta.MainKt"
+        mainClass = "dev.hgokhale.lists.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "dev.hgokhale.lysta"
+            packageName = "dev.hgokhale.lists"
             packageVersion = "1.0.0"
         }
     }

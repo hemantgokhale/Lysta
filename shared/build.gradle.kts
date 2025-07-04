@@ -60,7 +60,7 @@ kotlin {
 }
 
 android {
-    namespace = "dev.hgokhale.lysta.shared"
+    namespace = "dev.hgokhale.lists.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -74,7 +74,7 @@ android {
 sqldelight {
     databases {
         create("Database") {
-            packageName.set("dev.hgokhale.lysta.db")
+            packageName.set("dev.hgokhale.lists.db")
         }
     }
 }

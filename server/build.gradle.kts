@@ -4,10 +4,10 @@ plugins {
     application
 }
 
-group = "dev.hgokhale.lysta"
+group = "dev.hgokhale.lists"
 version = "1.0.0"
 application {
-    mainClass.set("dev.hgokhale.lysta.ApplicationKt")
+    mainClass.set("dev.hgokhale.lists.ApplicationKt")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=${extra["io.ktor.development"] ?: "false"}")
 }
 
