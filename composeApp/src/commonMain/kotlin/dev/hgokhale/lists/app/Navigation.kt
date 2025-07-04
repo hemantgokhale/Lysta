@@ -24,13 +24,14 @@ fun NavGraph(
     paddingValues: PaddingValues,
     navController: NavHostController,
     scaffoldViewModel: ScaffoldViewModel,
+    navigationViewModel: NavigationViewModel,
 ) {
     NavHost(
         navController = navController,
         startDestination = NavigationDestination.Home.route,
         modifier = Modifier.padding(paddingValues).imePadding()
     ) {
-        composable(NavigationDestination.Home.route) { HomeScreen(scaffoldViewModel = scaffoldViewModel) }
+        composable(NavigationDestination.Home.route) { HomeScreen(scaffoldViewModel, navigationViewModel) }
         composable(NavigationDestination.Lyst.route) { backStackEntry ->
             backStackEntry.arguments?.read { getStringOrNull("listId") }?.let {
                 LystScreen(listId = it, scaffoldViewModel = scaffoldViewModel)

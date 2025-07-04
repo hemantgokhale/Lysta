@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.hgokhale.lists.app.NavigationViewModel
 import dev.hgokhale.lists.app.ScaffoldViewModel
 import dev.hgokhale.lists.getPlatform
 import dev.hgokhale.lists.utils.DraggableHandle
@@ -52,8 +53,9 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 @Composable
 fun HomeScreen(
     scaffoldViewModel: ScaffoldViewModel,
+    navigationViewModel: NavigationViewModel,
     modifier: Modifier = Modifier,
-    homeViewModel: HomeViewModel = viewModel { HomeViewModel(scaffoldViewModel) },
+    homeViewModel: HomeViewModel = viewModel { HomeViewModel(scaffoldViewModel, navigationViewModel) },
 ) {
     val loaded by homeViewModel.loaded.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {

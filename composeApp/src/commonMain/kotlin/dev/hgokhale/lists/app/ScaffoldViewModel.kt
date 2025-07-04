@@ -15,18 +15,11 @@ data class TopBarAction(
     val onClick: () -> Unit,
 )
 
-sealed interface UiEvent {
-    sealed interface Navigation : UiEvent {
-        data class Navigate(val route: String) : Navigation
-        data object NavigateBack : Navigation
-    }
-
-    data class Snackbar(
-        val message: String,
-        val actionLabel: String,
-        val action: (() -> Unit)? = null
-    ) : UiEvent
-}
+data class SnackbarEvent(
+    val message: String,
+    val actionLabel: String,
+    val action: (() -> Unit)? = null,
+)
 
 data class TopBarState(
     val actions: List<TopBarAction> = emptyList(),
@@ -43,8 +36,8 @@ class ScaffoldViewModel : ViewModel() {
     private val _fabAction = MutableStateFlow<(() -> Unit)?>(null)
     val fabAction = _fabAction.asStateFlow()
 
-    private val _uiEvents = MutableSharedFlow<UiEvent>()
-    val uiEvents = _uiEvents.asSharedFlow()
+    private val _uiEvents = MutableSharedFlow<SnackbarEvent>()
+    val snackbarEvents = _uiEvents.asSharedFlow()
 
     fun focusOnTitle(requestFocus: Boolean) {
         _topBarState.update { it.copy(focusOnTitle = requestFocus) }
@@ -71,14 +64,6 @@ class ScaffoldViewModel : ViewModel() {
     }
 
     suspend fun showSnackbar(message: String, actionLabel: String, action: (() -> Unit)? = null) {
-        _uiEvents.emit(UiEvent.Snackbar(message, actionLabel, action))
-    }
-
-    suspend fun navigate(route: String) {
-        _uiEvents.emit(UiEvent.Navigation.Navigate(route))
-    }
-
-    suspend fun navigateBack() {
-        _uiEvents.emit(UiEvent.Navigation.NavigateBack)
+        _uiEvents.emit(SnackbarEvent(message, actionLabel, action))
     }
 }

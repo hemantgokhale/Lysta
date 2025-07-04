@@ -33,7 +33,7 @@ import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(scaffoldViewModel: ScaffoldViewModel) {
+fun TopBar(scaffoldViewModel: ScaffoldViewModel, navigationViewModel: NavigationViewModel) {
     val topBarState by scaffoldViewModel.topBarState.collectAsStateWithLifecycle()
 
     TopAppBar(
@@ -41,7 +41,7 @@ fun TopBar(scaffoldViewModel: ScaffoldViewModel) {
         navigationIcon = {
             val scope = rememberCoroutineScope()
             if (topBarState.showBackButton) {
-                IconButton(onClick = { scope.launch { scaffoldViewModel.navigateBack() } }) {
+                IconButton(onClick = { scope.launch { navigationViewModel.navigateBack() } }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             }

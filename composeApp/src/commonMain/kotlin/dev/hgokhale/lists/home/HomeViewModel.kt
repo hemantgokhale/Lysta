@@ -3,6 +3,7 @@ package dev.hgokhale.lists.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hgokhale.lists.app.NavigationDestination
+import dev.hgokhale.lists.app.NavigationViewModel
 import dev.hgokhale.lists.app.ScaffoldViewModel
 import dev.hgokhale.lists.model.Lyst
 import dev.hgokhale.lists.repository.getRepository
@@ -14,7 +15,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HomeViewModel(val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
+class HomeViewModel(
+    val scaffoldViewModel: ScaffoldViewModel,
+    val navigationViewModel: NavigationViewModel
+) : ViewModel() {
     data class UIItem(val id: String, val name: String, override var showHighlight: Boolean = false) : Highlightable
 
     private val _loaded = MutableStateFlow(false)
@@ -51,7 +55,7 @@ class HomeViewModel(val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
 
         publishNewItemNotification(newItem)
         viewModelScope.launch {
-            scaffoldViewModel.navigate(NavigationDestination.Lyst.routeFor(lyst.id))
+            navigationViewModel.navigate(NavigationDestination.Lyst.routeFor(lyst.id))
             scaffoldViewModel.focusOnTitle(true)
         }
         return lyst.id
@@ -59,7 +63,7 @@ class HomeViewModel(val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
 
     fun onListClicked(id: String) {
         viewModelScope.launch {
-            scaffoldViewModel.navigate(NavigationDestination.Lyst.routeFor(id))
+            navigationViewModel.navigate(NavigationDestination.Lyst.routeFor(id))
             scaffoldViewModel.focusOnTitle(false)
         }
     }
