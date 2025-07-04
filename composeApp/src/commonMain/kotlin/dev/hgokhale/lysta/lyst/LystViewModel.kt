@@ -50,6 +50,8 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     val showChecked = _showChecked.asStateFlow()
 
     private val _items: MutableStateFlow<List<UIItem>> = MutableStateFlow(emptyList())
+    val items = _items.asStateFlow()
+
     private val repository = getRepository()
 
     private val _lastItemChecked = MutableStateFlow(false)
