@@ -15,12 +15,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,45 +44,48 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.hgokhale.lists.app.NavigationViewModel
-import dev.hgokhale.lists.app.ScaffoldViewModel
 import dev.hgokhale.lists.getPlatform
+import dev.hgokhale.lists.utils.ConfigureSnackbar
+import dev.hgokhale.lists.utils.DraggableFAB
 import dev.hgokhale.lists.utils.DraggableHandle
 import dev.hgokhale.lists.utils.Highlightable
 import dev.hgokhale.lists.utils.LoadingIndicator
+import dev.hgokhale.lists.utils.LystaSnackbar
 import dev.hgokhale.lists.utils.ScrollToNewItemEffect
 import dev.hgokhale.lists.utils.SwipeToDeleteItem
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    scaffoldViewModel: ScaffoldViewModel,
     navigationViewModel: NavigationViewModel,
     modifier: Modifier = Modifier,
-    homeViewModel: HomeViewModel = viewModel { HomeViewModel(scaffoldViewModel, navigationViewModel) },
+    homeViewModel: HomeViewModel = viewModel { HomeViewModel(navigationViewModel) },
 ) {
     val loaded by homeViewModel.loaded.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
         homeViewModel.refreshListNames()
     }
 
+    ConfigureSnackbar(homeViewModel, snackbarHostState)
+
     if (loaded) {
-        ConfigureScaffold(scaffoldViewModel = scaffoldViewModel, homeViewModel = homeViewModel)
-        Home(homeViewModel = homeViewModel, modifier = modifier)
+        Scaffold(
+            topBar = {
+                val textStyle = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onBackground)
+                TopAppBar(title = { Text("My lists", style = textStyle) })
+            },
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { LystaSnackbar(it) }) },
+            floatingActionButton = { DraggableFAB { homeViewModel.createList() } },
+        ) { paddingValues ->
+            Home(homeViewModel = homeViewModel, modifier = modifier.padding(paddingValues))
+        }
     } else {
         LoadingIndicator(modifier = modifier)
-    }
-}
-
-@Composable
-private fun ConfigureScaffold(scaffoldViewModel: ScaffoldViewModel, homeViewModel: HomeViewModel) {
-    LaunchedEffect(Unit) {
-        scaffoldViewModel.updateTopBarTitle("My lists")
-        scaffoldViewModel.setOnTitleChange(null)
-        scaffoldViewModel.showBackButton(false)
-        scaffoldViewModel.setFabAction { homeViewModel.createList() }
-        scaffoldViewModel.setTopBarActions(listOf())
     }
 }
 

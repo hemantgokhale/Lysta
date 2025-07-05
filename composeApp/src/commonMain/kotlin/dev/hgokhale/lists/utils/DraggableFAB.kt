@@ -1,4 +1,4 @@
-package dev.hgokhale.lists.app
+package dev.hgokhale.lists.utils
 
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.offset

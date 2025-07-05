@@ -1,8 +1,6 @@
 package dev.hgokhale.lists.app
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -21,20 +19,18 @@ sealed class NavigationDestination(val route: String) {
 
 @Composable
 fun NavGraph(
-    paddingValues: PaddingValues,
     navController: NavHostController,
-    scaffoldViewModel: ScaffoldViewModel,
     navigationViewModel: NavigationViewModel,
 ) {
     NavHost(
         navController = navController,
         startDestination = NavigationDestination.Home.route,
-        modifier = Modifier.padding(paddingValues).imePadding()
+        modifier = Modifier.imePadding()
     ) {
-        composable(NavigationDestination.Home.route) { HomeScreen(scaffoldViewModel, navigationViewModel) }
+        composable(NavigationDestination.Home.route) { HomeScreen(navigationViewModel) }
         composable(NavigationDestination.Lyst.route) { backStackEntry ->
             backStackEntry.arguments?.read { getStringOrNull("listId") }?.let {
-                LystScreen(listId = it, scaffoldViewModel = scaffoldViewModel)
+                LystScreen(listId = it, navigationViewModel = navigationViewModel)
             }
         }
     }

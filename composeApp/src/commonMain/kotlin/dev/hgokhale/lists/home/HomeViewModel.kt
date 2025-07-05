@@ -4,10 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hgokhale.lists.app.NavigationDestination
 import dev.hgokhale.lists.app.NavigationViewModel
-import dev.hgokhale.lists.app.ScaffoldViewModel
 import dev.hgokhale.lists.model.Lyst
 import dev.hgokhale.lists.repository.getRepository
 import dev.hgokhale.lists.utils.Highlightable
+import dev.hgokhale.lists.utils.SnackbarState
+import dev.hgokhale.lists.utils.SnackbarStateImpl
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -15,10 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HomeViewModel(
-    val scaffoldViewModel: ScaffoldViewModel,
-    val navigationViewModel: NavigationViewModel
-) : ViewModel() {
+class HomeViewModel(val navigationViewModel: NavigationViewModel) : ViewModel(), SnackbarState by SnackbarStateImpl() {
     data class UIItem(val id: String, val name: String, override var showHighlight: Boolean = false) : Highlightable
 
     private val _loaded = MutableStateFlow(false)
@@ -48,7 +46,7 @@ class HomeViewModel(
     }
 
     fun createList(): String {
-        val lyst = Lyst(name = "New list")
+        val lyst = Lyst()
         val newItem = UIItem(lyst.id, lyst.name)
         _lists.value += newItem
         repository.addList(lyst)
@@ -56,7 +54,6 @@ class HomeViewModel(
         publishNewItemNotification(newItem)
         viewModelScope.launch {
             navigationViewModel.navigate(NavigationDestination.Lyst.routeFor(lyst.id))
-            scaffoldViewModel.focusOnTitle(true)
         }
         return lyst.id
     }
@@ -64,7 +61,6 @@ class HomeViewModel(
     fun onListClicked(id: String) {
         viewModelScope.launch {
             navigationViewModel.navigate(NavigationDestination.Lyst.routeFor(id))
-            scaffoldViewModel.focusOnTitle(false)
         }
     }
 
@@ -78,7 +74,7 @@ class HomeViewModel(
                     repository.deleteList(id)
                     deletedList = Pair(index, list)
                 }
-                scaffoldViewModel.showSnackbar(
+                showSnackbar(
                     message = "Deleted: ${listToDelete.name}",
                     actionLabel = "Undo",
                     action = { undeleteList() }

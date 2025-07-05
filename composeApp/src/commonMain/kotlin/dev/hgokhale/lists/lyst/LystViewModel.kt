@@ -2,11 +2,11 @@ package dev.hgokhale.lists.lyst
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.hgokhale.lists.app.ScaffoldViewModel
-import dev.hgokhale.lists.app.TopBarAction
 import dev.hgokhale.lists.model.Lyst
 import dev.hgokhale.lists.repository.getRepository
 import dev.hgokhale.lists.utils.Highlightable
+import dev.hgokhale.lists.utils.SnackbarState
+import dev.hgokhale.lists.utils.SnackbarStateImpl
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -15,16 +15,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import lysta.composeapp.generated.resources.Res
-import lysta.composeapp.generated.resources.ic_check_box
-import lysta.composeapp.generated.resources.ic_sort
 import kotlin.uuid.ExperimentalUuidApi
 
 
 data class AutoCompleteSuggestion(val text: String, val checked: Boolean)
 
 @OptIn(ExperimentalUuidApi::class)
-class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel) : ViewModel() {
+class LystViewModel(val listID: String) : ViewModel(), SnackbarState by SnackbarStateImpl() {
     data class UIItem(
         val listItem: Lyst.Item,
         override var showHighlight: Boolean = false,
@@ -57,6 +54,9 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
     private val _lastItemChecked = MutableStateFlow(false)
     val lastItemChecked = _lastItemChecked.asStateFlow()
 
+    private val _focusOnTitle = MutableStateFlow(false)
+    val focusOnTitle = _focusOnTitle.asStateFlow()
+
     init {
         viewModelScope.launch {
             repository
@@ -66,6 +66,7 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
                     _name.value = list.name
                     _sorted.value = list.isSorted
                     _showChecked.value = list.showChecked
+                    _focusOnTitle.value = list.isNew
                 }
                 ?: run {
                     _listNotFound.value = true
@@ -86,41 +87,19 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
 
     private var deletedItem: Pair<Int, UIItem>? = null // first = index, second = item
 
-    fun setTopBarActions() {
-        scaffoldViewModel.setTopBarActions(
-            listOf(
-                TopBarAction(
-                    contentDescription = if (showChecked.value) "Show checked items" else "Hide checked items",
-                    icon = Res.drawable.ic_check_box,
-                    isOn = showChecked.value,
-                    onClick = ::onShowCheckedClicked,
-                ),
-                TopBarAction(
-                    contentDescription = if (sorted.value) "Sorted" else "Not sorted",
-                    icon = Res.drawable.ic_sort,
-                    isOn = sorted.value,
-                    onClick = ::onSortClicked,
-                )
-            )
-        )
-    }
-
     fun onShowCheckedClicked() {
         _showChecked.value = !showChecked.value
         repository.updateShowChecked(listID, showChecked.value)
-        setTopBarActions()
     }
 
     fun onSortClicked() {
         _sorted.value = !sorted.value
         repository.updateSorted(listID, sorted.value)
-        setTopBarActions()
     }
 
     fun onNameChanged(name: String) {
         _name.value = name
         repository.updateName(listID, name)
-        scaffoldViewModel.updateTopBarTitle(name)
     }
 
     fun addItem(description: String = "", checked: Boolean = false): UIItem {
@@ -148,7 +127,7 @@ class LystViewModel(val listID: String, val scaffoldViewModel: ScaffoldViewModel
                 repository.deleteItem(listID, itemId)
                 deletedItem = Pair(index, itemToDelete)
 
-                scaffoldViewModel.showSnackbar(
+                showSnackbar(
                     message = "Deleted: ${itemToDelete.description}",
                     actionLabel = "Undo",
                     action = { undeleteItem() }
