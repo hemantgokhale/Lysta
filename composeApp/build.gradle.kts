@@ -78,7 +78,7 @@ kotlin {
 }
 
 android {
-    namespace = "dev.hgokhale.lists"
+    namespace = "dev.hgokhale.lysta"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
